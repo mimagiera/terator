@@ -1,7 +1,7 @@
 plugins {
-	id 'org.springframework.boot' version '2.5.6'
-	id 'io.spring.dependency-management' version '1.0.11.RELEASE'
-	id 'java'
+    id 'org.springframework.boot' version '2.5.6'
+    id 'io.spring.dependency-management' version '1.0.11.RELEASE'
+    id 'java'
 }
 
 group = 'com.terator'
@@ -9,15 +9,26 @@ version = '0.0.1-SNAPSHOT'
 sourceCompatibility = '17'
 
 repositories {
-	mavenCentral()
+    mavenCentral().content {
+        excludeModule("javax.media", "jai_core")
+    }
+    maven {
+        url "https://repo.osgeo.org/repository/release/"
+    }
 }
 
 dependencies {
-	implementation 'org.springframework.boot:spring-boot-starter:2.5.6'
-	implementation 'org.springframework.boot:spring-boot-starter-web:2.5.6'
-	testImplementation 'org.springframework.boot:spring-boot-starter-test:2.5.6'
+    implementation 'org.springframework.boot:spring-boot-starter:2.6.1'
+    implementation 'org.springframework.boot:spring-boot-starter-web:2.6.1'
+    implementation group: 'io.springfox', name: 'springfox-boot-starter', version: '3.0.0'
+
+    implementation group: 'com.google.guava', name: 'guava', version: '31.0.1-jre'
+
+    implementation group: 'org.openstreetmap.atlas', name: 'atlas', version: '6.6.1'
+
+    testImplementation 'org.springframework.boot:spring-boot-starter-test:2.6.1'
 }
 
 test {
-	useJUnitPlatform()
+    useJUnitPlatform()
 }
