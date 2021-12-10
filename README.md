@@ -1,5 +1,7 @@
 # trajectory-generator
 
+Used library: https://github.com/osmlab/atlas
+
 Each node contains tags. See: https://wiki.openstreetmap.org/wiki/Map_features
 
 Sample tags:
