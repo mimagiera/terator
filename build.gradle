@@ -24,7 +24,7 @@ dependencies {
 
     implementation group: 'com.google.guava', name: 'guava', version: '31.0.1-jre'
 
-    implementation group: 'org.openstreetmap.atlas', name: 'atlas', version: '6.6.1'
+    implementation group: 'org.openstreetmap.atlas', name: 'atlas', version: '6.6.2'
 
     testImplementation 'org.springframework.boot:spring-boot-starter-test:2.6.1'
 }

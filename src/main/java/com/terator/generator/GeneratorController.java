@@ -10,16 +10,17 @@ import java.util.List;
 @RestController
 public class GeneratorController {
 
-    private final TrajectoriesGenerator trajectoriesGenerator;
+    private final TrajectoriesFromFileGenerator trajectoriesFromFileGenerator;
 
-    public GeneratorController(TrajectoriesGenerator trajectoriesGenerator) {
-        this.trajectoriesGenerator = trajectoriesGenerator;
+    public GeneratorController(TrajectoriesFromFileGenerator trajectoriesFromFileGenerator) {
+        this.trajectoriesFromFileGenerator = trajectoriesFromFileGenerator;
     }
 
     @GetMapping("/")
     public List<SingleTrajectory> getTrajectories(@RequestParam String fileName) {
-        var mockPath = "/Users/mmagiera/agh/magisterka/terator/src/main/java/com/terator/andorra-latest.osm.pbf";
-        return trajectoriesGenerator.createTrajectoriesForFile(mockPath);
+        var mockPath = "D:\\agh\\magisterka\\terator\\src\\main\\resources\\map.osm.pbf";
+
+        return trajectoriesFromFileGenerator.createTrajectoriesForFile(mockPath);
     }
 
 }
