@@ -17,4 +17,5 @@ Swagger available at: http://localhost:8080/swagger-ui/
 
 Convert osm to osm.pbf:
 https://wiki.openstreetmap.org/wiki/Osmconvert
+
 ` .\osmconvert64-0.8.8p.exe map.osm -o="map.osm.pbf"`

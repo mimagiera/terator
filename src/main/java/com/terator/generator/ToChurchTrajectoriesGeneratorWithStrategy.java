@@ -1,13 +1,17 @@
 package com.terator.generator;
 
-import com.terator.model.Location;
 import com.terator.model.SingleTrajectory;
+import com.terator.model.TeratorLocation;
+import org.apache.commons.lang3.tuple.ImmutablePair;
+import org.openstreetmap.atlas.geography.Location;
+import org.openstreetmap.atlas.geography.atlas.Atlas;
 import org.openstreetmap.atlas.geography.atlas.items.AtlasEntity;
 import org.openstreetmap.atlas.geography.atlas.packed.PackedArea;
 import org.openstreetmap.atlas.geography.atlas.packed.PackedRelation;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.IOException;
 import java.time.Instant;
 import java.util.Collections;
 import java.util.LinkedList;
@@ -19,12 +23,14 @@ public class ToChurchTrajectoriesGeneratorWithStrategy implements TrajectoriesGe
     private static final Logger LOGGER = LoggerFactory.getLogger(ToChurchTrajectoriesGeneratorWithStrategy.class);
 
     @Override
-    public List<SingleTrajectory> createTrajectories(List<AtlasEntity> entities) {
-        return generateRoutesFromHousesToChurches(entities, Instant.now());
+    public List<SingleTrajectory> createTrajectories(List<AtlasEntity> entities, Atlas atlas) throws IOException {
+        return generateRoutesFromHousesToChurches(entities, Instant.now(), atlas);
     }
 
-    private List<SingleTrajectory> generateRoutesFromHousesToChurches(List<AtlasEntity> entities, Instant instant) {
-        var percentOfHousesGoingToChurch = 1;
+    private List<SingleTrajectory> generateRoutesFromHousesToChurches(List<AtlasEntity> entities, Instant instant,
+                                                                      Atlas atlas
+    ) throws IOException {
+        var percentOfHousesGoingToChurch = 0.4;
 
         var churches = DataExtractor.extractReligiousPlaces(entities);
         var houses = DataExtractor.extractLivingPlaces(entities);
@@ -36,54 +42,60 @@ public class ToChurchTrajectoriesGeneratorWithStrategy implements TrajectoriesGe
 
         var numberOfHousesPerChurch = randomHouses.size() / churches.size();
 
-        List<SingleTrajectory> result = new LinkedList<>();
+        List<ImmutablePair<Location, Location>> result = new LinkedList<>();
 
         for (int churchNumber = 0; churchNumber < churches.size(); churchNumber++) {
-            var housesToGoToThisChurch = randomHouses.subList(
-                    churchNumber * numberOfHousesPerChurch,
-                    (churchNumber + 1) * numberOfHousesPerChurch
-            );
+            var housesToGoToThisChurch = randomHouses.subList(churchNumber * numberOfHousesPerChurch,
+                    (churchNumber + 1) * numberOfHousesPerChurch);
 
-            var a = fromHousesToChurch(housesToGoToThisChurch, churches.get(churchNumber), instant);
-            result.addAll(a);
+            var fromHousesToThisChurch =
+                    createPairsOfAtlasLocation(housesToGoToThisChurch, churches.get(churchNumber));
+            result.addAll(fromHousesToThisChurch);
         }
 
-        return result;
+        if (false) {
+            // generate whole routes
+            ToSmartsFileSaver.saveToXml(atlas, result);
+        }
+
+        return result.stream()
+                .map(pair -> {
+                    var houseLocation = pair.getLeft();
+                    var churchLocation = pair.getRight();
+                    return new SingleTrajectory(getLocation(houseLocation), getLocation(churchLocation), instant);
+                })
+                .collect(Collectors.toList());
     }
 
-    private List<SingleTrajectory> fromHousesToChurch(List<AtlasEntity> houses, AtlasEntity church, Instant instant) {
-        var churchLocation = locationOfAtlasEntity(church);
-
-        return churchLocation.map(
-                        chLocation -> houses.stream()
-                                .map(this::locationOfAtlasEntity)
+    private List<ImmutablePair<Location, Location>> createPairsOfAtlasLocation(
+            List<AtlasEntity> houses,
+            AtlasEntity church
+    ) {
+        var churchLocation = locationOfAtlas(church);
+        return churchLocation.map(location ->
+                        houses.stream().map(this::locationOfAtlas)
                                 .flatMap(Optional::stream)
-                                .map(houseLocation -> new SingleTrajectory(houseLocation, chLocation, instant))
+                                .map(houseLocation -> new ImmutablePair<>(houseLocation, location))
                                 .collect(Collectors.toList())
                 )
                 .orElseGet(List::of);
     }
 
-    private Optional<Location> locationOfAtlasEntity(AtlasEntity atlasEntity) {
+    private Optional<Location> locationOfAtlas(AtlasEntity atlasEntity) {
         if (atlasEntity instanceof PackedArea packedArea) {
             var firstLocation = packedArea.asPolygon().get(0);
-            return getLocation(firstLocation);
+            return Optional.of(firstLocation);
         } else if (atlasEntity instanceof PackedRelation packedRelation) {
             var firstLocation = packedRelation.members().get(0).bounds().get(0);
-            return getLocation(firstLocation);
+            return Optional.of(firstLocation);
         } else {
             LOGGER.error("Cannot finn location of object with type {}", atlasEntity.getClass());
             return Optional.empty();
         }
     }
 
-    private Optional<Location> getLocation(org.openstreetmap.atlas.geography.Location atlasLocation) {
-        return Optional.of(
-                new Location(
-                        atlasLocation.getLongitude().toString(),
-                        atlasLocation.getLatitude().toString()
-                )
-        );
+    private TeratorLocation getLocation(org.openstreetmap.atlas.geography.Location atlasLocation) {
+        return new TeratorLocation(atlasLocation.getLongitude().toString(), atlasLocation.getLatitude().toString());
     }
 
 }
