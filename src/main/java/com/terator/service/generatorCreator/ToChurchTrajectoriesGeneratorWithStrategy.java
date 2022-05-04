@@ -1,9 +1,8 @@
-package com.terator.generator;
+package com.terator.service.generatorCreator;
 
+import com.terator.model.Location;
 import com.terator.model.SingleTrajectory;
-import com.terator.model.TeratorLocation;
 import org.apache.commons.lang3.tuple.ImmutablePair;
-import org.openstreetmap.atlas.geography.Location;
 import org.openstreetmap.atlas.geography.atlas.Atlas;
 import org.openstreetmap.atlas.geography.atlas.items.AtlasEntity;
 import org.openstreetmap.atlas.geography.atlas.packed.PackedArea;
@@ -42,7 +41,8 @@ public class ToChurchTrajectoriesGeneratorWithStrategy implements TrajectoriesGe
 
         var numberOfHousesPerChurch = randomHouses.size() / churches.size();
 
-        List<ImmutablePair<Location, Location>> result = new LinkedList<>();
+        List<ImmutablePair<org.openstreetmap.atlas.geography.Location, org.openstreetmap.atlas.geography.Location>>
+                result = new LinkedList<>();
 
         for (int churchNumber = 0; churchNumber < churches.size(); churchNumber++) {
             var housesToGoToThisChurch = randomHouses.subList(churchNumber * numberOfHousesPerChurch,
@@ -62,12 +62,12 @@ public class ToChurchTrajectoriesGeneratorWithStrategy implements TrajectoriesGe
                 .map(pair -> {
                     var houseLocation = pair.getLeft();
                     var churchLocation = pair.getRight();
-                    return new SingleTrajectory(getLocation(houseLocation), getLocation(churchLocation), instant);
+                    return new SingleTrajectory(instant, getLocation(houseLocation), getLocation(churchLocation));
                 })
                 .collect(Collectors.toList());
     }
 
-    private List<ImmutablePair<Location, Location>> createPairsOfAtlasLocation(
+    private List<ImmutablePair<org.openstreetmap.atlas.geography.Location, org.openstreetmap.atlas.geography.Location>> createPairsOfAtlasLocation(
             List<AtlasEntity> houses,
             AtlasEntity church
     ) {
@@ -81,7 +81,7 @@ public class ToChurchTrajectoriesGeneratorWithStrategy implements TrajectoriesGe
                 .orElseGet(List::of);
     }
 
-    private Optional<Location> locationOfAtlas(AtlasEntity atlasEntity) {
+    private Optional<org.openstreetmap.atlas.geography.Location> locationOfAtlas(AtlasEntity atlasEntity) {
         if (atlasEntity instanceof PackedArea packedArea) {
             var firstLocation = packedArea.asPolygon().get(0);
             return Optional.of(firstLocation);
@@ -94,8 +94,8 @@ public class ToChurchTrajectoriesGeneratorWithStrategy implements TrajectoriesGe
         }
     }
 
-    private TeratorLocation getLocation(org.openstreetmap.atlas.geography.Location atlasLocation) {
-        return new TeratorLocation(atlasLocation.getLongitude().toString(), atlasLocation.getLatitude().toString());
+    private Location getLocation(org.openstreetmap.atlas.geography.Location atlasLocation) {
+        return new Location(atlasLocation.getLongitude().toString(), atlasLocation.getLatitude().toString());
     }
 
 }

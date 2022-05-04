@@ -1,4 +1,4 @@
-package com.terator.generator;
+package com.terator.service.generatorCreator;
 
 import org.openstreetmap.atlas.geography.atlas.items.AtlasEntity;
 

@@ -1,4 +1,4 @@
-package com.terator.parser;
+package com.terator.service.osmImporter;
 
 import org.openstreetmap.atlas.geography.atlas.Atlas;
 import org.openstreetmap.atlas.geography.atlas.pbf.AtlasLoadingOption;
@@ -6,6 +6,8 @@ import org.openstreetmap.atlas.geography.atlas.raw.creation.RawAtlasGenerator;
 import org.openstreetmap.atlas.geography.atlas.raw.sectioning.AtlasSectionProcessor;
 import org.openstreetmap.atlas.streaming.resource.File;
 import org.springframework.stereotype.Service;
+
+import java.nio.file.FileSystem;
 
 @Service
 public class ToAtlasParser {

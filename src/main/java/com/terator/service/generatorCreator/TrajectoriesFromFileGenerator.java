@@ -1,7 +1,7 @@
-package com.terator.generator;
+package com.terator.service.generatorCreator;
 
 import com.terator.model.SingleTrajectory;
-import com.terator.parser.ToAtlasParser;
+import com.terator.service.osmImporter.ToAtlasParser;
 import org.openstreetmap.atlas.geography.atlas.Atlas;
 import org.openstreetmap.atlas.geography.atlas.items.AtlasEntity;
 import org.springframework.stereotype.Service;

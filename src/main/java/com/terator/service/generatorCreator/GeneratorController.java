@@ -1,4 +1,4 @@
-package com.terator.generator;
+package com.terator.service.generatorCreator;
 
 import com.terator.model.SingleTrajectory;
 import org.springframework.web.bind.annotation.GetMapping;
