@@ -1,7 +1,8 @@
 package com.terator.service.accuracyImprover;
 
+import com.terator.model.GeneratedTrajectoriesAccuracy;
 import com.terator.model.generatorTable.Probabilities;
 
 public interface AccuracyImprover {
-    void improve(Probabilities probabilities, String accuracy);
+    void improve(Probabilities probabilities, GeneratedTrajectoriesAccuracy accuracy);
 }

@@ -17,6 +17,6 @@ public class AtlasOsmImporter implements OsmImporter {
         var entities = StreamSupport
                 .stream(atlas.entities().spliterator(), false).toList();
 
-        return null;
+        return new City(entities);
     }
 }

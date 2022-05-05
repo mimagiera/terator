@@ -22,14 +22,14 @@ public class TrajectoriesFromFileGenerator {
         this.toAtlasParser = toAtlasParser;
     }
 
-    List<SingleTrajectory> createTrajectoriesForFile(String fileName) throws IOException {
+    public List<SingleTrajectory> createTrajectoriesForFile(String fileName) throws IOException {
         if (entities.isEmpty()) {
             atlas = toAtlasParser.parse(fileName);
             entities = StreamSupport
                     .stream(atlas.entities().spliterator(), false).toList();
         }
 
-        return new ToChurchTrajectoriesGeneratorWithStrategy().createTrajectories(entities, atlas);
+        return List.of();
     }
 
 }

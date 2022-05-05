@@ -18,7 +18,7 @@ import java.util.UUID;
 import java.util.stream.Collectors;
 
 public class ToSmartsFileSaver {
-    static void saveToXml(Atlas atlas, List<ImmutablePair<Location, Location>> result) throws IOException {
+    public static void saveToXml(Atlas atlas, List<ImmutablePair<Location, Location>> result) throws IOException {
         var routes = result.stream().limit(2)
                 .map(pair -> {
                     var houseLocation = pair.getLeft();
@@ -49,7 +49,7 @@ public class ToSmartsFileSaver {
         finalSmartsXml.append("</data>\n");
         var totalRes = finalSmartsXml.toString();
 
-        FileWriter fileWriter = new FileWriter(String.format("routes_%s.txt", Instant.now().toString()));
+        FileWriter fileWriter = new FileWriter(String.format("routes_%d.txt", Instant.now().toEpochMilli()));
         PrintWriter printWriter = new PrintWriter(fileWriter);
         printWriter.print(totalRes);
         printWriter.close();

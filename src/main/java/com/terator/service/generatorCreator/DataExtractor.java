@@ -17,14 +17,14 @@ public final class DataExtractor {
     private static final Set<String> RELIGIOUS_BUILDING_TYPES = Set.of("cathedral", "chapel", "church");
 
 
-    static List<AtlasEntity> extractLivingPlaces(List<AtlasEntity> entities) {
+    public static List<AtlasEntity> extractLivingPlaces(List<AtlasEntity> entities) {
         return extractBuildings(entities, entity -> {
             var buildingValue = entity.getOsmTags().get(BUILDING);
             return buildingValue != null && LIVING_BUILDING_TYPES.contains(buildingValue);
         });
     }
 
-    static List<AtlasEntity> extractReligiousPlaces(List<AtlasEntity> entities) {
+    public static List<AtlasEntity> extractReligiousPlaces(List<AtlasEntity> entities) {
         return extractBuildings(entities, entity -> {
             var buildingValue = entity.getOsmTags().get(BUILDING);
             return buildingValue != null && RELIGIOUS_BUILDING_TYPES.contains(buildingValue);
