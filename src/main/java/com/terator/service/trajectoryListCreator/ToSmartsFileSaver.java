@@ -1,4 +1,4 @@
-package com.terator.service.generatorCreator;
+package com.terator.service.trajectoryListCreator;
 
 import org.apache.commons.lang3.tuple.ImmutablePair;
 import org.openstreetmap.atlas.geography.Location;

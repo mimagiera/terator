@@ -1,4 +1,4 @@
-package com.terator.service.generatorCreator;
+package com.terator.service.trajectoryListCreator;
 
 import com.terator.model.SingleTrajectory;
 import com.terator.service.osmImporter.ToAtlasParser;
