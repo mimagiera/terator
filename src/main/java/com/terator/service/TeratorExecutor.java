@@ -23,9 +23,9 @@ public class TeratorExecutor {
     private final AccuracyImprover accuracyImprover;
 
     public Probabilities execute(String osmFile) {
-        var city = osmImporter.importData(osmFile);
+        var probabilities = generatorCreator.generateProbabilities();
 
-        var probabilities = generatorCreator.generateProbabilities(city);
+        var city = osmImporter.importData(osmFile);
 
         var trajectories = trajectoryListCreator.createTrajectories(probabilities);
 
