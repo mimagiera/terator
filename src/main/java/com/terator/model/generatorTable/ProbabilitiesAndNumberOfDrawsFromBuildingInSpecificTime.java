@@ -6,6 +6,6 @@ import java.util.Map;
 
 public record ProbabilitiesAndNumberOfDrawsFromBuildingInSpecificTime(
         Map<BuildingType, Double> probabilityToType,
-        Long numberOfDraws
+        int numberOfDraws
 ) {
 }

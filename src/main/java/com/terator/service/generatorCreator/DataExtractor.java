@@ -14,8 +14,7 @@ public final class DataExtractor {
      * more at https://wiki.openstreetmap.org/wiki/Pl:Key:building
      */
     private static final Set<String> LIVING_BUILDING_TYPES = Set.of("apartments", "house");
-    private static final Set<String> RELIGIOUS_BUILDING_TYPES = Set.of("cathedral", "chapel", "church");
-
+    private static final Set<String> OFFICE_BUILDING_TYPES = Set.of("office");
 
     public static List<AtlasEntity> extractLivingPlaces(List<AtlasEntity> entities) {
         return extractBuildings(entities, entity -> {
@@ -24,10 +23,10 @@ public final class DataExtractor {
         });
     }
 
-    public static List<AtlasEntity> extractReligiousPlaces(List<AtlasEntity> entities) {
+    public static List<AtlasEntity> extractOfficePlaces(List<AtlasEntity> entities) {
         return extractBuildings(entities, entity -> {
             var buildingValue = entity.getOsmTags().get(BUILDING);
-            return buildingValue != null && RELIGIOUS_BUILDING_TYPES.contains(buildingValue);
+            return buildingValue != null && OFFICE_BUILDING_TYPES.contains(buildingValue);
         });
     }
 

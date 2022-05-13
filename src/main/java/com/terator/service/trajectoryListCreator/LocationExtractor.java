@@ -9,14 +9,11 @@ import org.slf4j.LoggerFactory;
 
 import java.util.Optional;
 
-public class Utils {
-    private static final Logger LOGGER = LoggerFactory.getLogger(Utils.class);
+public class LocationExtractor {
+    private static final Logger LOGGER = LoggerFactory.getLogger(LocationExtractor.class);
 
-    void entityToArea(AtlasEntity entity) {
-        var l = locationOfAtlas(entity)
-                .map(Utils::getLocation)
-                .get();
-        // todo
+    public static Optional<Location> teratorLocation(AtlasEntity atlasEntity) {
+        return locationOfAtlas(atlasEntity).map(LocationExtractor::getLocation);
     }
 
     private static Optional<org.openstreetmap.atlas.geography.Location> locationOfAtlas(AtlasEntity atlasEntity) {

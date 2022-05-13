@@ -1,6 +1,6 @@
 package com.terator.service;
 
-import com.terator.model.generatorTable.Probabilities;
+import com.terator.model.Trajectories;
 import com.terator.service.accuracyChecker.AccuracyChecker;
 import com.terator.service.accuracyImprover.AccuracyImprover;
 import com.terator.service.generatorCreator.GeneratorCreator;
@@ -15,6 +15,8 @@ import java.util.stream.IntStream;
 @Service
 @RequiredArgsConstructor
 public class TeratorExecutor {
+    public static final int MINUTES_INTERVAL_GENERATOR = 60;
+
     private final OsmImporter osmImporter;
     private final GeneratorCreator generatorCreator;
     private final TrajectoryListCreator trajectoryListCreator;
@@ -22,12 +24,12 @@ public class TeratorExecutor {
     private final AccuracyChecker accuracyChecker;
     private final AccuracyImprover accuracyImprover;
 
-    public Probabilities execute(String osmFile) {
+    public Trajectories execute(String osmFile) {
         var probabilities = generatorCreator.generateProbabilities();
 
         var city = osmImporter.importData(osmFile);
 
-        var trajectories = trajectoryListCreator.createTrajectories(probabilities);
+        var trajectories = trajectoryListCreator.createTrajectories(probabilities, city);
 
         var simulationResult = simulationExecutor.executeSimulation(city, trajectories);
 
@@ -37,6 +39,6 @@ public class TeratorExecutor {
         IntStream.range(0, 5)
                 .forEach(value -> accuracyImprover.improve(probabilities, accuracy));
 
-        return probabilities;
+        return trajectories;
     }
 }

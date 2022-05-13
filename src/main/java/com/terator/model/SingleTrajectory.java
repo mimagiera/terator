@@ -1,6 +1,6 @@
 package com.terator.model;
 
-import java.time.Instant;
+import java.time.LocalTime;
 
-public record SingleTrajectory(Instant startTime, Location startLocation, Location endLocation) {
+public record SingleTrajectory(LocalTime startTime, Location startLocation, Location endLocation) {
 }

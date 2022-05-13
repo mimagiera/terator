@@ -1,5 +1,6 @@
 package com.terator.controler;
 
+import com.terator.model.Trajectories;
 import com.terator.model.generatorTable.Probabilities;
 import com.terator.service.TeratorExecutor;
 import lombok.RequiredArgsConstructor;
@@ -14,7 +15,7 @@ public class GeneratorController {
     private final TeratorExecutor teratorExecutor;
 
     @GetMapping("/")
-    public Probabilities getTrajectories(@RequestParam String fileName) {
+    public Trajectories getTrajectories(@RequestParam String fileName) {
         var mockPath = "D:\\agh\\magisterka\\terator\\src\\main\\resources\\map.osm.pbf";
 
         return teratorExecutor.execute(mockPath);
