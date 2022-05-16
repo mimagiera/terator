@@ -1,4 +1,4 @@
 package com.terator.model;
 
-public record Location(String longitude, String latitude) {
+public record Location(Double longitude, Double latitude) {
 }

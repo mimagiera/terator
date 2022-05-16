@@ -48,17 +48,17 @@ public class SimpleTrajectoryListCreator implements TrajectoryListCreator {
                             fromBuildingTypeGenerator.probabilitiesAndNumberOfDrawsFromBuilding();
                     var perfectDistancesFromBuilding = fromBuildingTypeGenerator.perfectDistancesFromBuilding();
 
-                    var destinationsFromSingleSpecific =
-                            findDestinationTypesWithStartingTime(probabilitiesAndNumberOfDrawsFromBuilding);
-
                     var startingBuildings = startingBuildingType.getEntitiesProvider().apply(city);
 
                     LOGGER.debug("Number of buildings with type: {}, {}", startingBuildingType,
                             startingBuildings.size());
 
                     final List<SingleTrajectory> singleTrajectories = startingBuildings.stream()
-                            .map(house ->
-                                    createFromSpecificHouse(house, destinationsFromSingleSpecific,
+                            .map(startBuilding ->
+                                    createFromSpecificBuilding(startBuilding, city,
+                                            findDestinationTypesWithStartingTime(
+                                                    probabilitiesAndNumberOfDrawsFromBuilding
+                                            ),
                                             perfectDistancesFromBuilding)
                             )
                             .flatMap(List::stream)
@@ -75,11 +75,13 @@ public class SimpleTrajectoryListCreator implements TrajectoryListCreator {
                 });
     }
 
-    private List<SingleTrajectory> createFromSpecificHouse(
+    private List<SingleTrajectory> createFromSpecificBuilding(
             AtlasEntity entity,
+            City city,
             List<Pair<LocalTime, BuildingType>> destinations,
             PerfectDistancesFromBuilding perfectDistances
     ) {
+
         return LocationExtractor.teratorLocation(entity)
                 .map(startingPointLocation -> destinations.stream()
                         .map(localTimeBuildingTypePair -> {
@@ -89,7 +91,7 @@ public class SimpleTrajectoryListCreator implements TrajectoryListCreator {
                                     perfectDistances.distancesToBuildingTypes().get(destinationType);
 
                             return destinationFinder
-                                    .findDestination(entity, destinationType, perfectDistanceToType)
+                                    .findDestination(entity, city, destinationType, perfectDistanceToType)
                                     .map(destinationLocation ->
                                             new SingleTrajectory(startTime, startingPointLocation, destinationLocation)
                                     );

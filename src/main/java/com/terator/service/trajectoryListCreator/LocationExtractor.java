@@ -30,7 +30,7 @@ public class LocationExtractor {
     }
 
     private static Location getLocation(org.openstreetmap.atlas.geography.Location atlasLocation) {
-        return new Location(atlasLocation.getLongitude().toString(), atlasLocation.getLatitude().toString());
+        return new Location(atlasLocation.getLongitude().asDegrees(), atlasLocation.getLatitude().asDegrees());
     }
 
 }
