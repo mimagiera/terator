@@ -1,7 +1,10 @@
 package com.terator.service.trajectoryListCreator;
 
+import com.terator.model.SingleTrajectory;
 import org.apache.commons.lang3.tuple.ImmutablePair;
+import org.openstreetmap.atlas.geography.Latitude;
 import org.openstreetmap.atlas.geography.Location;
+import org.openstreetmap.atlas.geography.Longitude;
 import org.openstreetmap.atlas.geography.atlas.Atlas;
 import org.openstreetmap.atlas.geography.atlas.items.AtlasEntity;
 import org.openstreetmap.atlas.geography.atlas.items.Route;
@@ -18,13 +21,15 @@ import java.util.UUID;
 import java.util.stream.Collectors;
 
 public class ToSmartsFileSaver {
+
     public static void saveToXml(Atlas atlas, List<ImmutablePair<Location, Location>> result) throws IOException {
         var routes = result.stream().limit(2)
                 .map(pair -> {
                     var houseLocation = pair.getLeft();
                     var churchLocation = pair.getRight();
                     final Route route =
-                            AStarRouter.dijkstra(atlas, Distance.MAXIMUM).route(houseLocation, churchLocation);
+                            AStarRouter.fastComputationAndSubOptimalRoute(atlas, Distance.MAXIMUM)
+                                    .route(houseLocation, churchLocation);
                     if (route != null) {
                         var isFoot =
                                 route.nodes().stream().anyMatch(

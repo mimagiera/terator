@@ -1,4 +1,8 @@
 package com.terator.model;
 
-public record SimulationResult() {
+import com.terator.model.simulation.SimulationState;
+
+public record SimulationResult(
+        SimulationState simulationState
+) {
 }

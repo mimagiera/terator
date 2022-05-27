@@ -5,6 +5,6 @@ import com.terator.service.generatorCreator.building.BuildingType;
 import java.util.Map;
 
 public record PerfectDistancesFromBuilding(
-        Map<BuildingType, Double> distancesToBuildingTypes
+        Map<BuildingType, Integer> expectedDistancesToBuildingTypes
 ) {
 }

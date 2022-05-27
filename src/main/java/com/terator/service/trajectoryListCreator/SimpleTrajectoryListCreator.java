@@ -19,8 +19,12 @@ import org.springframework.stereotype.Service;
 import java.time.LocalTime;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
+import java.util.Random;
 import java.util.stream.Collectors;
+
+import static com.terator.service.TeratorExecutor.MINUTES_INTERVAL_GENERATOR;
 
 @Service
 @RequiredArgsConstructor
@@ -28,13 +32,16 @@ public class SimpleTrajectoryListCreator implements TrajectoryListCreator {
     private static final Logger LOGGER = LoggerFactory.getLogger(SimpleTrajectoryListCreator.class);
 
     private final DestinationFinder destinationFinder;
+    private final Random random = new Random();
 
     @Override
     public Trajectories createTrajectories(Probabilities probabilities, City city) {
+        LOGGER.info("Starting creating trajectories");
         var trajectories = Arrays.stream(BuildingType.values())
                 .map(buildingType -> findTrajectoriesFromBuildingType(probabilities, city, buildingType))
                 .flatMap(List::stream)
                 .collect(Collectors.toList());
+        LOGGER.debug("Number of all trajectories from: {}", trajectories.size());
 
         return new Trajectories(trajectories);
     }
@@ -54,12 +61,18 @@ public class SimpleTrajectoryListCreator implements TrajectoryListCreator {
                             startingBuildings.size());
 
                     final List<SingleTrajectory> singleTrajectories = startingBuildings.stream()
+//                            .limit(3)
                             .map(startBuilding ->
-                                    createFromSpecificBuilding(startBuilding, city,
-                                            findDestinationTypesWithStartingTime(
-                                                    probabilitiesAndNumberOfDrawsFromBuilding
-                                            ),
-                                            perfectDistancesFromBuilding)
+                                    {
+                                        var destinationTypesWithStartingTime =
+                                                findDestinationTypesWithStartingTime(
+                                                        probabilitiesAndNumberOfDrawsFromBuilding,
+                                                        startBuilding
+                                                );
+                                        return createFromSpecificBuilding(startBuilding, city,
+                                                destinationTypesWithStartingTime,
+                                                perfectDistancesFromBuilding);
+                                    }
                             )
                             .flatMap(List::stream)
                             .collect(Collectors.toList());
@@ -81,48 +94,69 @@ public class SimpleTrajectoryListCreator implements TrajectoryListCreator {
             List<Pair<LocalTime, BuildingType>> destinations,
             PerfectDistancesFromBuilding perfectDistances
     ) {
-
         return LocationExtractor.teratorLocation(entity)
                 .map(startingPointLocation -> destinations.stream()
                         .map(localTimeBuildingTypePair -> {
                             var startTime = localTimeBuildingTypePair.getKey();
                             var destinationType = localTimeBuildingTypePair.getValue();
-                            var perfectDistanceToType =
-                                    perfectDistances.distancesToBuildingTypes().get(destinationType);
+                            double perfectDistance = getPerfectDistance(perfectDistances, destinationType);
 
                             return destinationFinder
-                                    .findDestination(entity, city, destinationType, perfectDistanceToType)
+                                    .findDestination(entity, city, destinationType, perfectDistance)
                                     .map(destinationLocation ->
-                                            new SingleTrajectory(startTime, startingPointLocation, destinationLocation)
+                                            new SingleTrajectory(startTime, startingPointLocation,
+                                                    destinationLocation)
                                     );
                         })
                         .flatMap(Optional::stream)
-                        .collect(Collectors.toList()))
+                        .collect(Collectors.toList())
+                )
                 .orElseGet(() -> {
                     LOGGER.warn("Cannot find location of starting point");
                     return List.of();
                 });
     }
 
+    private int getPerfectDistance(PerfectDistancesFromBuilding perfectDistances, BuildingType destinationType) {
+        var expectedPerfectDistanceToType =
+                perfectDistances.expectedDistancesToBuildingTypes().get(destinationType);
+        return (int) random.nextGaussian(expectedPerfectDistanceToType, 100);
+    }
+
     private List<Pair<LocalTime, BuildingType>> findDestinationTypesWithStartingTime(
-            ProbabilitiesAndNumberOfDrawsFromBuilding fromBuildingTypeGenerator
+            ProbabilitiesAndNumberOfDrawsFromBuilding fromBuildingTypeGenerator,
+            AtlasEntity startBuilding
     ) {
+        var buildingSurfaceArea = SurfaceAreaCalculator.calculateArea(startBuilding);
         return fromBuildingTypeGenerator
                 .probabilitiesInTime()
                 .entrySet()
                 .stream()
                 .flatMap(timeWithDestinationProbabilities -> {
-                    var localTime = timeWithDestinationProbabilities.getKey();
-                    var destinationsInTime = calculateDestinationTypes(timeWithDestinationProbabilities.getValue());
-                    return destinationsInTime.stream().map(destinationType -> new Pair<>(localTime, destinationType));
+                    var startTime = getRandomStartTime(timeWithDestinationProbabilities);
+                    var destinationsInTime =
+                            calculateDestinationTypes(timeWithDestinationProbabilities.getValue(), buildingSurfaceArea);
+                    return destinationsInTime.stream().map(destinationType -> new Pair<>(startTime, destinationType));
                 })
                 .collect(Collectors.toList());
     }
 
-    private List<BuildingType> calculateDestinationTypes(
-            ProbabilitiesAndNumberOfDrawsFromBuildingInSpecificTime probabilitiesAndNumberOfDrawsFromBuildingInSpecificTime
+    private LocalTime getRandomStartTime(
+            Map.Entry<LocalTime, ProbabilitiesAndNumberOfDrawsFromBuildingInSpecificTime> timeWithDestinationProbabilities
     ) {
-        var numberOfDraws = probabilitiesAndNumberOfDrawsFromBuildingInSpecificTime.numberOfDraws();
+        var localTime = timeWithDestinationProbabilities.getKey();
+        int numberOfMinutesToAdd = random.nextInt(MINUTES_INTERVAL_GENERATOR);
+        return localTime.plusMinutes(numberOfMinutesToAdd);
+    }
+
+    private List<BuildingType> calculateDestinationTypes(
+            ProbabilitiesAndNumberOfDrawsFromBuildingInSpecificTime probabilitiesAndNumberOfDrawsFromBuildingInSpecificTime,
+            double buildingSurfaceArea
+    ) {
+        var numberOfDraws =
+                getNumberOfDraws(
+                        probabilitiesAndNumberOfDrawsFromBuildingInSpecificTime.expectedNumberOfDraws(),
+                        buildingSurfaceArea);
         if (numberOfDraws > 0) {
             var probabilityToType = probabilitiesAndNumberOfDrawsFromBuildingInSpecificTime.probabilityToType();
             List<Pair<BuildingType, Double>> itemWeights =
@@ -139,5 +173,12 @@ public class SimpleTrajectoryListCreator implements TrajectoryListCreator {
         } else {
             return List.of();
         }
+    }
+
+    private int getNumberOfDraws(double expectedNumberOfDrawsFotBuildingType, double buildingSurfaceArea) {
+        double areaConst = 1d / 3000d;
+
+        var expectedNumberOfDrawsBasedOnArea = expectedNumberOfDrawsFotBuildingType * buildingSurfaceArea * areaConst;
+        return (int) random.nextGaussian(expectedNumberOfDrawsBasedOnArea, 1.5);
     }
 }

@@ -19,8 +19,8 @@ public class FromHouseStrategy implements FromBuildingTypeStrategy {
         return new FromBuildingTypeGenerator(
                 new ProbabilitiesAndNumberOfDrawsFromBuilding(createProbabilitiesInTime()),
                 new PerfectDistancesFromBuilding(Map.of(
-                        BuildingType.HOUSE, 2.3,
-                        BuildingType.OFFICE, 4.5
+                        BuildingType.HOUSE, 400,
+                        BuildingType.OFFICE, 500
                 ))
         );
     }
@@ -39,7 +39,7 @@ public class FromHouseStrategy implements FromBuildingTypeStrategy {
                                     BuildingType.HOUSE, 0.2,
                                     BuildingType.OFFICE, 0.4
                             ),
-                            new Random().nextInt(2)
+                            new Random().nextDouble() / 5
                     ));
                 });
         return res;
