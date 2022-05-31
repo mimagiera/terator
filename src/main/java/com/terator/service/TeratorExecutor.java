@@ -1,10 +1,11 @@
 package com.terator.service;
 
+import com.terator.model.SimulationResult;
 import com.terator.model.Trajectories;
+import com.terator.model.simulation.SimulationState;
 import com.terator.service.accuracyChecker.AccuracyChecker;
 import com.terator.service.accuracyImprover.AccuracyImprover;
 import com.terator.service.generatorCreator.GeneratorCreator;
-import com.terator.service.inductionLoops.InfluenceDetectorSegmentService;
 import com.terator.service.osmImporter.OsmImporter;
 import com.terator.service.simulationExecutor.SimulationExecutor;
 import com.terator.service.trajectoryListCreator.TrajectoryListCreator;
@@ -12,6 +13,8 @@ import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
+
+import java.util.Map;
 
 @Service
 @RequiredArgsConstructor
@@ -25,11 +28,12 @@ public class TeratorExecutor {
     private final SimulationExecutor simulationExecutor;
     private final AccuracyChecker accuracyChecker;
     private final AccuracyImprover accuracyImprover;
-    private final InfluenceDetectorSegmentService influenceDetectorSegmentService;
 
     public Trajectories execute(String osmFile) {
-        var a = influenceDetectorSegmentService.getAll();
-        var df = 243;
+
+        var accuracy = accuracyChecker.checkAccuracy(new SimulationResult(new SimulationState(Map.of())));
+
+
 //        long startProbabilities = System.currentTimeMillis();
 //        var probabilities = generatorCreator.generateProbabilities();
 //        long endProbabilities = System.currentTimeMillis();
@@ -55,7 +59,6 @@ public class TeratorExecutor {
 //        IntStream.range(0, 5)
 //                .forEach(value -> accuracyImprover.improve(probabilities, accuracy));
 
-//        return trajectories;
         return null;
     }
 

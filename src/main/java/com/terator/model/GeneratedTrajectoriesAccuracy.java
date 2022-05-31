@@ -1,4 +1,8 @@
 package com.terator.model;
 
-public record GeneratedTrajectoriesAccuracy() {
+import java.util.Set;
+
+public record GeneratedTrajectoriesAccuracy(
+        Set<AccuracyInSegment> accuracyInSegments
+) {
 }
