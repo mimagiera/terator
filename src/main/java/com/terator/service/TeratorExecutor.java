@@ -1,20 +1,30 @@
 package com.terator.service;
 
-import com.terator.model.SimulationResult;
+import com.terator.model.City;
 import com.terator.model.Trajectories;
-import com.terator.model.simulation.SimulationState;
+import com.terator.model.inductionLoops.AggregatedTrafficBySegment;
 import com.terator.service.accuracyChecker.AccuracyChecker;
 import com.terator.service.accuracyImprover.AccuracyImprover;
 import com.terator.service.generatorCreator.GeneratorCreator;
+import com.terator.service.generatorCreator.building.BuildingType;
+import com.terator.service.inductionLoops.AggregatedTrafficBySegmentService;
 import com.terator.service.osmImporter.OsmImporter;
 import com.terator.service.simulationExecutor.SimulationExecutor;
 import com.terator.service.trajectoryListCreator.TrajectoryListCreator;
 import lombok.RequiredArgsConstructor;
+import org.openstreetmap.atlas.geography.atlas.items.AtlasEntity;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 
+import java.util.Arrays;
+import java.util.List;
 import java.util.Map;
+import java.util.Set;
+import java.util.function.Function;
+import java.util.stream.Collectors;
+import java.util.stream.IntStream;
+import java.util.stream.StreamSupport;
 
 @Service
 @RequiredArgsConstructor
@@ -29,38 +39,70 @@ public class TeratorExecutor {
     private final AccuracyChecker accuracyChecker;
     private final AccuracyImprover accuracyImprover;
 
+    private final AggregatedTrafficBySegmentService aggregatedTrafficBySegmentService;
+
     public Trajectories execute(String osmFile) {
+        // executed once
+        // generateInitialProbabilities
+        long startProbabilities = System.currentTimeMillis();
+        var probabilities = generatorCreator.generateProbabilities();
+        long endProbabilities = System.currentTimeMillis();
+        printElapsedTime(startProbabilities, endProbabilities, "probabilities");
 
-        var accuracy = accuracyChecker.checkAccuracy(new SimulationResult(new SimulationState(Map.of())));
+        // parse OSM file
+        var city = osmImporter.importData(osmFile);
+        long endCity = System.currentTimeMillis();
+        printElapsedTime(endProbabilities, endCity, "city");
 
+        // fetch data from induction loops
+        var aggregatedTrafficBySegments = getAggregatedTrafficBySegments();
+        long endGettingAggregatedDataFromInductionLoops = System.currentTimeMillis();
+        printElapsedTime(endCity, endGettingAggregatedDataFromInductionLoops,
+                "gettingAggregatedDataFromInductionLoops");
 
-//        long startProbabilities = System.currentTimeMillis();
-//        var probabilities = generatorCreator.generateProbabilities();
-//        long endProbabilities = System.currentTimeMillis();
-//        printElapsedTime(startProbabilities, endProbabilities, "probabilities");
-//
-//        var city = osmImporter.importData(osmFile);
-//        long endCity = System.currentTimeMillis();
-//        printElapsedTime(endProbabilities, endCity, "city");
-//
-//        var trajectories = trajectoryListCreator.createTrajectories(probabilities, city);
-//        long endTrajectories = System.currentTimeMillis();
-//        printElapsedTime(endCity, endTrajectories, "trajectories");
-//
-//        var simulationResult = simulationExecutor.executeSimulation(city, trajectories);
-//        long endSimulationResult = System.currentTimeMillis();
-//        printElapsedTime(endTrajectories, endSimulationResult, "simulationResult");
-//
-//        var accuracy = accuracyChecker.checkAccuracy(simulationResult);
-//        long endAccuracy = System.currentTimeMillis();
-//        printElapsedTime(endSimulationResult, endAccuracy, "accuracy");
-//
-//        // todo how this should work
-//        IntStream.range(0, 5)
-//                .forEach(value -> accuracyImprover.improve(probabilities, accuracy));
+        // find all building by types
+        Map<BuildingType, List<AtlasEntity>> allBuildingsByType = getBuildingsByType(city);
+        long endFindingBuildingsWithTypes = System.currentTimeMillis();
+        printElapsedTime(endGettingAggregatedDataFromInductionLoops, endFindingBuildingsWithTypes,
+                "findingBuildingsWithTypes");
 
-        return null;
+        // executed multiple times to optimize result
+
+        // generate trajectories based on generator
+        var trajectories = trajectoryListCreator.createTrajectories(probabilities, city, allBuildingsByType);
+        long endTrajectories = System.currentTimeMillis();
+        printElapsedTime(endFindingBuildingsWithTypes, endTrajectories, "trajectories");
+
+        // simulate trajectories
+        var simulationResult = simulationExecutor.executeSimulation(city, trajectories);
+        long endSimulationResult = System.currentTimeMillis();
+        printElapsedTime(endTrajectories, endSimulationResult, "simulationResult");
+
+        // find accuracy
+        var accuracy = accuracyChecker.checkAccuracy(simulationResult, aggregatedTrafficBySegments);
+        long endAccuracy = System.currentTimeMillis();
+        printElapsedTime(endSimulationResult, endAccuracy, "accuracy");
+
+        // todo how this should work
+        IntStream.range(0, 5)
+                .forEach(value -> accuracyImprover.improve(probabilities, accuracy));
+
+        return trajectories;
     }
+
+    private Map<BuildingType, List<AtlasEntity>> getBuildingsByType(City city) {
+        return Arrays.stream(BuildingType.values())
+                .collect(Collectors.toMap(
+                        Function.identity(),
+                        buildingType -> buildingType.getEntitiesProvider().apply(city)
+                ));
+    }
+
+    private Map<Integer, Set<AggregatedTrafficBySegment>> getAggregatedTrafficBySegments() {
+        return StreamSupport.stream(aggregatedTrafficBySegmentService.getAll().spliterator(), false)
+                .collect(Collectors.groupingBy(AggregatedTrafficBySegment::getSegmentId, Collectors.toSet()));
+    }
+
 
     private static void printElapsedTime(long start, long end, String message) {
         float sec = (end - start) / 1000F;

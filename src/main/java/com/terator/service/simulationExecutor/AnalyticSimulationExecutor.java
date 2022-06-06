@@ -7,11 +7,13 @@ import com.terator.model.Trajectories;
 import com.terator.model.simulation.DensityInTime;
 import com.terator.model.simulation.SimulationSegment;
 import com.terator.model.simulation.SimulationState;
+import com.terator.service.trajectoryListCreator.LocationExtractor;
 import lombok.RequiredArgsConstructor;
 import org.openstreetmap.atlas.geography.Latitude;
 import org.openstreetmap.atlas.geography.Location;
 import org.openstreetmap.atlas.geography.Longitude;
 import org.openstreetmap.atlas.geography.atlas.Atlas;
+import org.openstreetmap.atlas.geography.atlas.items.Edge;
 import org.openstreetmap.atlas.geography.atlas.items.Route;
 import org.openstreetmap.atlas.geography.atlas.routing.AStarRouter;
 import org.openstreetmap.atlas.utilities.scalars.Distance;
@@ -22,6 +24,7 @@ import org.springframework.stereotype.Service;
 import java.time.Duration;
 import java.time.LocalTime;
 import java.util.HashMap;
+import java.util.LinkedList;
 import java.util.Optional;
 import java.util.concurrent.atomic.AtomicReference;
 
@@ -52,8 +55,8 @@ public class AnalyticSimulationExecutor implements SimulationExecutor {
     }
 
     private Optional<Route> createRoute(SingleTrajectory singleTrajectory, Atlas atlas) {
-        var startLocation = fromTeratorLocation(singleTrajectory.startLocation());
-        var endLocation = fromTeratorLocation(singleTrajectory.endLocation());
+        var startLocation = LocationExtractor.fromTeratorLocation(singleTrajectory.startLocation());
+        var endLocation = LocationExtractor.fromTeratorLocation(singleTrajectory.endLocation());
 
         final Route route =
                 AStarRouter.fastComputationAndSubOptimalRoute(atlas, Distance.MAXIMUM)
@@ -64,6 +67,8 @@ public class AnalyticSimulationExecutor implements SimulationExecutor {
 
     private SimulationState simulateRoute(Route route, SimulationState simulationState, LocalTime startTime) {
         var nodes = route.nodes();
+        var edges = new LinkedList<Edge>();
+        route.forEach(edges::add);
         var state = simulationState.state();
 
         var timeThatCarEnterSegment = startTime;
@@ -120,10 +125,6 @@ public class AnalyticSimulationExecutor implements SimulationExecutor {
         var simulationBasedTime = timeCalculations.findTimeInSimulation(timeThatCarEnterSegment);
 
         return Duration.ofSeconds(5); //todo
-    }
-
-    private Location fromTeratorLocation(com.terator.model.Location a) {
-        return new Location(Latitude.degrees(a.latitude()), Longitude.degrees(a.longitude()));
     }
 
 }

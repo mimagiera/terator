@@ -1,6 +1,5 @@
 package com.terator.service.trajectoryListCreator;
 
-import com.terator.model.City;
 import com.terator.model.Location;
 import com.terator.service.generatorCreator.building.BuildingType;
 import org.apache.lucene.util.SloppyMath;
@@ -9,23 +8,22 @@ import org.springframework.stereotype.Service;
 
 import java.util.Comparator;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 
 @Service
 public class DestinationFinder {
-    Optional<Location> findDestination(AtlasEntity entity, City city, BuildingType destinationType,
-                                       Double perfectDistanceToType
+    Optional<Location> findDestination(AtlasEntity entity, BuildingType destinationType,
+                                       Double perfectDistanceToType,
+                                       Map<BuildingType, List<AtlasEntity>> allBuildingsByType
     ) {
-        Optional<AtlasEntity> entityWithTheBestSDistance = findProperDestinations(city, destinationType).stream()
+        Optional<AtlasEntity> entityWithTheBestSDistance = allBuildingsByType.get(destinationType)
+                .stream()
                 .min(Comparator.comparingDouble(destination ->
                         Math.abs(distanceBetweenEntities(entity, destination) - perfectDistanceToType)
                 ));
 
         return entityWithTheBestSDistance.flatMap(LocationExtractor::teratorLocation);
-    }
-
-    private List<AtlasEntity> findProperDestinations(City city, BuildingType destinationType) {
-        return destinationType.getEntitiesProvider().apply(city);
     }
 
     private Double distanceBetweenEntities(AtlasEntity start, AtlasEntity end) {

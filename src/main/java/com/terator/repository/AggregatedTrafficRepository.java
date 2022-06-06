@@ -7,5 +7,6 @@ import org.springframework.stereotype.Repository;
 
 @Repository
 public interface AggregatedTrafficRepository extends CrudRepository<AggregatedTraffic, AggregatedTrafficId> {
+
     Iterable<AggregatedTraffic> findAggregatedTrafficsBydetectorId(Integer detectoriId);
 }

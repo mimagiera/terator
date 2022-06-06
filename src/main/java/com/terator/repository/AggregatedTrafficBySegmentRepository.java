@@ -8,6 +8,7 @@ import org.springframework.stereotype.Repository;
 @Repository
 public interface AggregatedTrafficBySegmentRepository
         extends CrudRepository<AggregatedTrafficBySegment, AggregatedTrafficBySegmentId> {
+
     Iterable<AggregatedTrafficBySegment> findAggregatedTrafficsBysegmentId(Integer segmentId);
 
 }

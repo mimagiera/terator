@@ -14,6 +14,10 @@ public class AggregatedTrafficBySegmentService {
         aggregatedTrafficBySegmentRepository.saveAll(aggregatedTrafficBySegments);
     }
 
+    public Iterable<AggregatedTrafficBySegment> getAll() {
+        return aggregatedTrafficBySegmentRepository.findAll();
+    }
+
     public Iterable<AggregatedTrafficBySegment> getBySegmentId(Integer segmentId) {
         return aggregatedTrafficBySegmentRepository.findAggregatedTrafficsBysegmentId(segmentId);
     }
