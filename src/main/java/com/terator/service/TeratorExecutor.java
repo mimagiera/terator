@@ -8,6 +8,7 @@ import com.terator.service.accuracyImprover.AccuracyImprover;
 import com.terator.service.generatorCreator.GeneratorCreator;
 import com.terator.service.generatorCreator.building.BuildingType;
 import com.terator.service.inductionLoops.AggregatedTrafficBySegmentService;
+import com.terator.service.inductionLoopsWithOsm.FixturesLocationMatcher;
 import com.terator.service.osmImporter.OsmImporter;
 import com.terator.service.simulationExecutor.SimulationExecutor;
 import com.terator.service.trajectoryListCreator.TrajectoryListCreator;
@@ -38,6 +39,8 @@ public class TeratorExecutor {
     private final SimulationExecutor simulationExecutor;
     private final AccuracyChecker accuracyChecker;
     private final AccuracyImprover accuracyImprover;
+
+    private final FixturesLocationMatcher fixturesLocationMatcher;
 
     private final AggregatedTrafficBySegmentService aggregatedTrafficBySegmentService;
 
@@ -79,7 +82,13 @@ public class TeratorExecutor {
         printElapsedTime(endTrajectories, endSimulationResult, "simulationResult");
 
         // find accuracy
-        var accuracy = accuracyChecker.checkAccuracy(simulationResult, aggregatedTrafficBySegments);
+        var detectorLocationToSimulationSegment =
+                fixturesLocationMatcher.findAllMatchingSegmentsToDetectors(
+                        simulationResult.simulationState().state().keySet()
+                );
+        var accuracy = accuracyChecker.checkAccuracy(
+                simulationResult, aggregatedTrafficBySegments, detectorLocationToSimulationSegment
+        );
         long endAccuracy = System.currentTimeMillis();
         printElapsedTime(endSimulationResult, endAccuracy, "accuracy");
 

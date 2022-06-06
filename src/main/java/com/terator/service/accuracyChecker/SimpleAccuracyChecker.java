@@ -6,16 +6,18 @@ import com.terator.model.SimulationResult;
 import com.terator.model.inductionLoops.AggregatedTrafficBySegment;
 import com.terator.model.inductionLoops.DetectorLocation;
 import com.terator.model.simulation.DensityInTime;
+import com.terator.model.simulation.SimulationSegment;
 import com.terator.service.inductionLoops.InductionLoopsDataExtractor;
+import com.terator.service.inductionLoopsWithOsm.FixturesLocationMatcher;
 import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 
 import java.util.Map;
-import java.util.Optional;
 import java.util.Random;
 import java.util.Set;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
 @Service
@@ -27,27 +29,23 @@ public class SimpleAccuracyChecker implements AccuracyChecker {
     @Override
     public GeneratedTrajectoriesAccuracy checkAccuracy(
             SimulationResult simulationResult,
-            Map<Integer, Set<AggregatedTrafficBySegment>> aggregatedTrafficBySegments
+            Map<Integer, Set<AggregatedTrafficBySegment>> aggregatedTrafficBySegments,
+            Map<DetectorLocation, SimulationSegment> detectorLocationToSimulationSegment
     ) {
         LOGGER.info("Starting checking accuracy");
-        var detectorsWithLocations = inductionLoopsDataExtractor.extractData();
         var simulationState = simulationResult.simulationState().state();
-        var existingSegmentsFromSimulation = simulationState.keySet();
-        var fixturesLocationMatcher = new FixturesLocationMatcher(existingSegmentsFromSimulation);
 
-        var resultsFromSegments = detectorsWithLocations.stream()
-                .map(detectorWithLocations -> {
-                    var locationsToBeMatched = detectorWithLocations.locationOfFixtures();
-                    var matchedSegment2 = fixturesLocationMatcher.findMostMatchingSegment(locationsToBeMatched);
-                    return matchedSegment2.map(matchedSegment -> {
-                        var dataFromSimulation = simulationState.get(matchedSegment);
-                        var dataFromInductionLoops =
-                                aggregatedTrafficBySegments.get(detectorWithLocations.segmentId());
+        var resultsFromSegments = detectorLocationToSimulationSegment.entrySet().stream()
+                .map(detectorsWithMappedSegments -> {
+                    var detectorWithLocations = detectorsWithMappedSegments.getKey();
+                    var matchedSegment = detectorsWithMappedSegments.getValue();
 
-                        return compareDataFromSimulationWithRealData(dataFromSimulation, dataFromInductionLoops);
-                    });
+                    var dataFromSimulation = simulationState.get(matchedSegment);
+                    var dataFromInductionLoops =
+                            aggregatedTrafficBySegments.get(detectorWithLocations.segmentId());
+
+                    return compareDataFromSimulationWithRealData(dataFromSimulation, dataFromInductionLoops);
                 })
-                .flatMap(Optional::stream)
                 .collect(Collectors.toSet());
 
         return new GeneratedTrajectoriesAccuracy(resultsFromSegments);

@@ -1,4 +1,4 @@
-package com.terator.service.inductionLoops;
+package com.terator.service.inductionLoops.singleExecuted;
 
 import com.terator.model.inductionLoops.AggregatedTraffic;
 import com.terator.repository.AggregatedTrafficRepository;

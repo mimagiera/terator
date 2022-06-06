@@ -1,9 +1,13 @@
-package com.terator.service.inductionLoops;
+package com.terator.service.inductionLoops.singleExecuted;
 
 import com.terator.model.inductionLoops.AggregatedTraffic;
 import com.terator.model.inductionLoops.AggregatedTrafficBySegment;
 import com.terator.model.inductionLoops.DetectorsWithSegmentId;
 import com.terator.model.inductionLoops.InfluenceDetectorSegment;
+import com.terator.service.inductionLoops.AggregatedTrafficBySegmentService;
+import com.terator.service.inductionLoops.InductionLoopsDataExtractor;
+import com.terator.service.inductionLoops.InfluenceDetectorSegmentService;
+import com.terator.service.inductionLoops.TrafficService;
 import lombok.RequiredArgsConstructor;
 import org.apache.commons.math3.util.Pair;
 import org.springframework.stereotype.Service;
@@ -19,7 +23,7 @@ import java.util.stream.Collectors;
 @Service
 @RequiredArgsConstructor
 /*
-  Can be used to aggreaget dta from induction loops by detector id or segment id
+  Can be used to aggregate dta from induction loops by detector id or segment id
  */
 public class AggregateTrafficData {
 

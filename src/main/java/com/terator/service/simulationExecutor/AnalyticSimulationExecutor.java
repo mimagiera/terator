@@ -9,9 +9,6 @@ import com.terator.model.simulation.SimulationSegment;
 import com.terator.model.simulation.SimulationState;
 import com.terator.service.trajectoryListCreator.LocationExtractor;
 import lombok.RequiredArgsConstructor;
-import org.openstreetmap.atlas.geography.Latitude;
-import org.openstreetmap.atlas.geography.Location;
-import org.openstreetmap.atlas.geography.Longitude;
 import org.openstreetmap.atlas.geography.atlas.Atlas;
 import org.openstreetmap.atlas.geography.atlas.items.Edge;
 import org.openstreetmap.atlas.geography.atlas.items.Route;
@@ -66,17 +63,14 @@ public class AnalyticSimulationExecutor implements SimulationExecutor {
     }
 
     private SimulationState simulateRoute(Route route, SimulationState simulationState, LocalTime startTime) {
-        var nodes = route.nodes();
         var edges = new LinkedList<Edge>();
         route.forEach(edges::add);
-        var state = simulationState.state();
 
+        var state = simulationState.state();
         var timeThatCarEnterSegment = startTime;
 
-        for (int i = 0; i < nodes.size() - 1; i++) {
-            var startNode = nodes.get(i);
-            var endNode = nodes.get(i + 1);
-            var simulationSegment = new SimulationSegment(startNode, endNode);
+        for (Edge edge : edges) {
+            var simulationSegment = new SimulationSegment(edge);
             var densityInSegment = state.getOrDefault(simulationSegment, new DensityInTime(new HashMap<>()));
 
             var timeInSegment = executeStep(simulationSegment, densityInSegment, timeThatCarEnterSegment);

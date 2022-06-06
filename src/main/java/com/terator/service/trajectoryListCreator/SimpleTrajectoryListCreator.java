@@ -66,7 +66,7 @@ public class SimpleTrajectoryListCreator implements TrajectoryListCreator {
                             startingBuildings.size());
 
                     final List<SingleTrajectory> singleTrajectories = startingBuildings.stream()
-                            .limit(3)
+//                            .limit(3)
                             .map(startBuilding ->
                                     {
                                         var destinationTypesWithStartingTime =

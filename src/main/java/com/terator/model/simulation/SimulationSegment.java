@@ -1,9 +1,8 @@
 package com.terator.model.simulation;
 
-import org.openstreetmap.atlas.geography.atlas.items.Node;
+import org.openstreetmap.atlas.geography.atlas.items.Edge;
 
 public record SimulationSegment(
-        Node startNode,
-        Node endNode
+        Edge edge
 ) {
 }

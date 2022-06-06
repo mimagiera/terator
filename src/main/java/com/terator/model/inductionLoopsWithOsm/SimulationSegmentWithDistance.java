@@ -1,4 +1,4 @@
-package com.terator.service.accuracyChecker;
+package com.terator.model.inductionLoopsWithOsm;
 
 import com.terator.model.simulation.SimulationSegment;
 
