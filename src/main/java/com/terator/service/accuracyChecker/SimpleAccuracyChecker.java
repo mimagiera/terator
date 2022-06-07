@@ -1,14 +1,14 @@
 package com.terator.service.accuracyChecker;
 
-import com.terator.model.AccuracyInSegment;
 import com.terator.model.GeneratedTrajectoriesAccuracy;
 import com.terator.model.SimulationResult;
+import com.terator.model.accuracyChecker.AccuracyInHour;
+import com.terator.model.accuracyChecker.AccuracyInSegment;
 import com.terator.model.inductionLoops.AggregatedTrafficBySegment;
 import com.terator.model.inductionLoops.DetectorLocation;
 import com.terator.model.simulation.DensityInTime;
 import com.terator.model.simulation.SimulationSegment;
 import com.terator.service.inductionLoops.InductionLoopsDataExtractor;
-import com.terator.service.inductionLoopsWithOsm.FixturesLocationMatcher;
 import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -19,6 +19,7 @@ import java.util.Random;
 import java.util.Set;
 import java.util.function.Function;
 import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 
 @Service
 @RequiredArgsConstructor
@@ -55,8 +56,45 @@ public class SimpleAccuracyChecker implements AccuracyChecker {
             DensityInTime dataFromSimulation,
             Set<AggregatedTrafficBySegment> dataFromInductionLoops
     ) {
-        // todo
-        return new AccuracyInSegment();
+        var averageCountPerHour = dataFromInductionLoops.stream()
+                .collect(Collectors.groupingBy(
+                        AggregatedTrafficBySegment::getHour,
+                        Collectors.mapping(AggregatedTrafficBySegment::getCount, Collectors.averagingInt(a -> a))
+                ));
+
+        var dataFromSimulationPerHour = dataFromSimulation.density()
+                .entrySet().stream()
+                .collect(Collectors.toMap(
+                        localTimeLongEntry -> localTimeLongEntry.getKey().getHour(),
+                        Map.Entry::getValue,
+                        Long::sum
+                ));
+
+        var accuracyInHours = IntStream.rangeClosed(0, 23)
+                .boxed()
+                .collect(Collectors.toMap(
+                        Function.identity(),
+                        hour -> new AccuracyInHour(
+                                dataFromSimulationPerHour.getOrDefault(hour, 0L),
+                                averageCountPerHour.getOrDefault(hour, 0d)
+                        )
+                ));
+
+        var accuracy = accuracyInHours.values().stream()
+                .map(accuracyInHour -> {
+                    var fromSimulation = accuracyInHour.countFromSimulation();
+                    var fromInductionLoops = accuracyInHour.averageCountFromInductionLoops();
+                    if (fromInductionLoops != 0) {
+                        return 100 - Math.abs(fromSimulation - fromInductionLoops) / fromInductionLoops * 100;
+                    } else {
+                        return 100d;
+                    }
+                })
+                .mapToDouble(a -> a)
+                .average()
+                .getAsDouble();
+
+        return new AccuracyInSegment(accuracyInHours, accuracy);
     }
 
     private void printAllLocations(Set<DetectorLocation> detectorsWithLocations) {
