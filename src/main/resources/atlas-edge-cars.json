@@ -1,0 +1,5 @@
+{
+  "atlas-edge": {
+    "taggableFilter": "access->!no||motor_vehicle->yes||motorcar->yes||vehicle->yes&oneway->!reversible&route->ferry||man_made->pier||junction->roundabout||highway->MOTORWAY,TRUNK,PRIMARY,SECONDARY,TERTIARY,UNCLASSIFIED,RESIDENTIAL,SERVICE,MOTORWAY_LINK,TRUNK_LINK,PRIMARY_LINK,SECONDARY_LINK,TERTIARY_LINK,LIVING_STREET,TRACK,ROAD"
+  }
+}

@@ -1,10 +1,7 @@
 package com.terator.service.trajectoryListCreator;
 
-import com.terator.model.SingleTrajectory;
 import org.apache.commons.lang3.tuple.ImmutablePair;
-import org.openstreetmap.atlas.geography.Latitude;
 import org.openstreetmap.atlas.geography.Location;
-import org.openstreetmap.atlas.geography.Longitude;
 import org.openstreetmap.atlas.geography.atlas.Atlas;
 import org.openstreetmap.atlas.geography.atlas.items.AtlasEntity;
 import org.openstreetmap.atlas.geography.atlas.items.Route;

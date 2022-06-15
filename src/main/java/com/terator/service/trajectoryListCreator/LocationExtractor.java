@@ -1,8 +1,5 @@
 package com.terator.service.trajectoryListCreator;
 
-import com.terator.model.Location;
-import org.openstreetmap.atlas.geography.Latitude;
-import org.openstreetmap.atlas.geography.Longitude;
 import org.openstreetmap.atlas.geography.atlas.items.AtlasEntity;
 import org.openstreetmap.atlas.geography.atlas.packed.PackedArea;
 import org.openstreetmap.atlas.geography.atlas.packed.PackedRelation;
@@ -14,16 +11,7 @@ import java.util.Optional;
 public class LocationExtractor {
     private static final Logger LOGGER = LoggerFactory.getLogger(LocationExtractor.class);
 
-    public static Optional<Location> teratorLocation(AtlasEntity atlasEntity) {
-        return locationOfAtlas(atlasEntity).map(LocationExtractor::getLocation);
-    }
-
-    public static org.openstreetmap.atlas.geography.Location fromTeratorLocation(com.terator.model.Location a) {
-        return new org.openstreetmap.atlas.geography.Location(Latitude.degrees(a.latitude()),
-                Longitude.degrees(a.longitude()));
-    }
-
-    private static Optional<org.openstreetmap.atlas.geography.Location> locationOfAtlas(AtlasEntity atlasEntity) {
+    public static Optional<org.openstreetmap.atlas.geography.Location> locationOfAtlas(AtlasEntity atlasEntity) {
         if (atlasEntity instanceof PackedArea packedArea) {
             var firstLocation = packedArea.asPolygon().get(0);
             return Optional.of(firstLocation);
@@ -34,10 +22,6 @@ public class LocationExtractor {
             LOGGER.error("Cannot find location of object with type {}", atlasEntity.getClass());
             return Optional.empty();
         }
-    }
-
-    private static Location getLocation(org.openstreetmap.atlas.geography.Location atlasLocation) {
-        return new Location(atlasLocation.getLongitude().asDegrees(), atlasLocation.getLatitude().asDegrees());
     }
 
 }

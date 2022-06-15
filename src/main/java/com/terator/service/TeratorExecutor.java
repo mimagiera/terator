@@ -1,7 +1,8 @@
 package com.terator.service;
 
 import com.terator.model.City;
-import com.terator.model.Trajectories;
+import com.terator.model.GeneratedTrajectoriesAccuracy;
+import com.terator.model.LocationWithMetaSpecificParameter;
 import com.terator.model.inductionLoops.AggregatedTrafficBySegment;
 import com.terator.service.accuracyChecker.AccuracyChecker;
 import com.terator.service.accuracyImprover.AccuracyImprover;
@@ -13,7 +14,6 @@ import com.terator.service.osmImporter.OsmImporter;
 import com.terator.service.simulationExecutor.SimulationExecutor;
 import com.terator.service.trajectoryListCreator.TrajectoryListCreator;
 import lombok.RequiredArgsConstructor;
-import org.openstreetmap.atlas.geography.atlas.items.AtlasEntity;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
@@ -44,7 +44,7 @@ public class TeratorExecutor {
 
     private final AggregatedTrafficBySegmentService aggregatedTrafficBySegmentService;
 
-    public Trajectories execute(String osmFile) {
+    public GeneratedTrajectoriesAccuracy execute(String osmFile) {
         // executed once
         // generateInitialProbabilities
         long startProbabilities = System.currentTimeMillis();
@@ -64,7 +64,7 @@ public class TeratorExecutor {
                 "gettingAggregatedDataFromInductionLoops");
 
         // find all building by types
-        Map<BuildingType, List<AtlasEntity>> allBuildingsByType = getBuildingsByType(city);
+        var allBuildingsByType = getBuildingsByType(city);
         long endFindingBuildingsWithTypes = System.currentTimeMillis();
         printElapsedTime(endGettingAggregatedDataFromInductionLoops, endFindingBuildingsWithTypes,
                 "findingBuildingsWithTypes");
@@ -96,10 +96,10 @@ public class TeratorExecutor {
         IntStream.range(0, 5)
                 .forEach(value -> accuracyImprover.improve(probabilities, accuracy));
 
-        return trajectories;
+        return accuracy;
     }
 
-    private Map<BuildingType, List<AtlasEntity>> getBuildingsByType(City city) {
+    private Map<BuildingType, List<? extends LocationWithMetaSpecificParameter>> getBuildingsByType(City city) {
         return Arrays.stream(BuildingType.values())
                 .collect(Collectors.toMap(
                         Function.identity(),

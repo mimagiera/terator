@@ -1,6 +1,7 @@
 package com.terator.service.trajectoryListCreator;
 
 import com.terator.model.City;
+import com.terator.model.LocationWithMetaSpecificParameter;
 import com.terator.model.SingleTrajectory;
 import com.terator.model.Trajectories;
 import com.terator.model.generatorTable.PerfectDistancesFromBuilding;
@@ -11,7 +12,6 @@ import com.terator.service.generatorCreator.building.BuildingType;
 import lombok.RequiredArgsConstructor;
 import org.apache.commons.math3.distribution.EnumeratedDistribution;
 import org.apache.commons.math3.util.Pair;
-import org.openstreetmap.atlas.geography.atlas.items.AtlasEntity;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
@@ -36,12 +36,14 @@ public class SimpleTrajectoryListCreator implements TrajectoryListCreator {
 
     @Override
     public Trajectories createTrajectories(
-            Probabilities probabilities, City city, Map<BuildingType, List<AtlasEntity>> allBuildingsByType
+            Probabilities probabilities,
+            City city,
+            Map<BuildingType, List<? extends LocationWithMetaSpecificParameter>> allBuildingsByType
     ) {
         LOGGER.info("Starting creating trajectories");
         var trajectories = Arrays.stream(BuildingType.values())
                 .map(buildingType -> findTrajectoriesFromBuildingType(
-                        probabilities, city, buildingType, allBuildingsByType)
+                        probabilities, buildingType, allBuildingsByType)
                 )
                 .flatMap(List::stream)
                 .collect(Collectors.toList());
@@ -50,9 +52,10 @@ public class SimpleTrajectoryListCreator implements TrajectoryListCreator {
         return new Trajectories(trajectories);
     }
 
-    private List<SingleTrajectory> findTrajectoriesFromBuildingType(Probabilities probabilities, City city,
-                                                                    BuildingType startingBuildingType,
-                                                                    Map<BuildingType, List<AtlasEntity>> allBuildingsByType
+    private List<SingleTrajectory> findTrajectoriesFromBuildingType(
+            Probabilities probabilities,
+            BuildingType startingBuildingType,
+            Map<BuildingType, List<? extends LocationWithMetaSpecificParameter>> allBuildingsByType
     ) {
         return Optional.ofNullable(probabilities.buildingTypeFromBuildingTypeGeneratorMap().get(startingBuildingType))
                 .map(fromBuildingTypeGenerator -> {
@@ -67,15 +70,15 @@ public class SimpleTrajectoryListCreator implements TrajectoryListCreator {
 
                     final List<SingleTrajectory> singleTrajectories = startingBuildings.stream()
 //                            .limit(3)
-                            .map(startBuilding ->
+                            .map(locationWithMetaSpecificParameter ->
                                     {
                                         var destinationTypesWithStartingTime =
                                                 findDestinationTypesWithStartingTime(
                                                         probabilitiesAndNumberOfDrawsFromBuilding,
-                                                        startBuilding
+                                                        locationWithMetaSpecificParameter
                                                 );
                                         return createFromSpecificBuilding(
-                                                startBuilding,
+                                                locationWithMetaSpecificParameter,
                                                 destinationTypesWithStartingTime,
                                                 perfectDistancesFromBuilding,
                                                 allBuildingsByType);
@@ -96,32 +99,28 @@ public class SimpleTrajectoryListCreator implements TrajectoryListCreator {
     }
 
     private List<SingleTrajectory> createFromSpecificBuilding(
-            AtlasEntity entity,
+            LocationWithMetaSpecificParameter locationWithMetaSpecificParameter,
             List<Pair<LocalTime, BuildingType>> destinations,
             PerfectDistancesFromBuilding perfectDistances,
-            Map<BuildingType, List<AtlasEntity>> allBuildingsByType
+            Map<BuildingType, List<? extends LocationWithMetaSpecificParameter>> allBuildingsByType
     ) {
-        return LocationExtractor.teratorLocation(entity)
-                .map(startingPointLocation -> destinations.stream()
-                        .map(localTimeBuildingTypePair -> {
-                            var startTime = localTimeBuildingTypePair.getKey();
-                            var destinationType = localTimeBuildingTypePair.getValue();
-                            double perfectDistance = getPerfectDistance(perfectDistances, destinationType);
+        var startingPointLocation = locationWithMetaSpecificParameter.getLocation();
+        return destinations.stream()
+                .map(localTimeBuildingTypePair -> {
+                    var startTime = localTimeBuildingTypePair.getKey();
+                    var destinationType = localTimeBuildingTypePair.getValue();
+                    double perfectDistance = getPerfectDistance(perfectDistances, destinationType);
 
-                            return destinationFinder
-                                    .findDestination(entity, destinationType, perfectDistance, allBuildingsByType)
-                                    .map(destinationLocation ->
-                                            new SingleTrajectory(startTime, startingPointLocation,
-                                                    destinationLocation)
-                                    );
-                        })
-                        .flatMap(Optional::stream)
-                        .collect(Collectors.toList())
-                )
-                .orElseGet(() -> {
-                    LOGGER.warn("Cannot find location of starting point");
-                    return List.of();
-                });
+                    return destinationFinder
+                            .findDestination(startingPointLocation, destinationType, perfectDistance,
+                                    allBuildingsByType)
+                            .map(destinationLocation ->
+                                    new SingleTrajectory(startTime, startingPointLocation,
+                                            destinationLocation)
+                            );
+                })
+                .flatMap(Optional::stream)
+                .collect(Collectors.toList());
     }
 
     private int getPerfectDistance(PerfectDistancesFromBuilding perfectDistances, BuildingType destinationType) {
@@ -132,9 +131,9 @@ public class SimpleTrajectoryListCreator implements TrajectoryListCreator {
 
     private List<Pair<LocalTime, BuildingType>> findDestinationTypesWithStartingTime(
             ProbabilitiesAndNumberOfDrawsFromBuilding fromBuildingTypeGenerator,
-            AtlasEntity startBuilding
+            LocationWithMetaSpecificParameter locationWithMetaSpecificParameter
     ) {
-        var buildingSurfaceArea = SurfaceAreaCalculator.calculateArea(startBuilding);
+        var buildingSurfaceArea = locationWithMetaSpecificParameter.getMetaSpecificValue();
         return fromBuildingTypeGenerator
                 .probabilitiesInTime()
                 .entrySet()

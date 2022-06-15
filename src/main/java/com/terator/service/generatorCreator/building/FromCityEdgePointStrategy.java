@@ -13,15 +13,15 @@ import java.util.stream.IntStream;
 
 import static com.terator.service.TeratorExecutor.MINUTES_INTERVAL_GENERATOR;
 
-public class FromHouseStrategy implements FromBuildingTypeStrategy {
+public final class FromCityEdgePointStrategy implements FromBuildingTypeStrategy {
     @Override
     public FromBuildingTypeGenerator createGenerator() {
         return new FromBuildingTypeGenerator(
                 new ProbabilitiesAndNumberOfDrawsFromBuilding(createProbabilitiesInTime()),
                 new PerfectDistancesFromBuilding(Map.of(
-                        BuildingType.HOUSE, 400,
-                        BuildingType.OFFICE, 500,
-                        BuildingType.CITY_EDGE_POINT, 10
+                        BuildingType.HOUSE, 900,
+                        BuildingType.OFFICE, 1500,
+                        BuildingType.CITY_EDGE_POINT, 1200
                 ))
         );
     }
@@ -37,8 +37,8 @@ public class FromHouseStrategy implements FromBuildingTypeStrategy {
                     var first = LocalTime.of(hour, minuteOfHour);
                     res.put(first, new ProbabilitiesAndNumberOfDrawsFromBuildingInSpecificTime(
                             Map.of(
-                                    BuildingType.HOUSE, 0.2,
-                                    BuildingType.OFFICE, 0.4,
+                                    BuildingType.HOUSE, 0.03,
+                                    BuildingType.OFFICE, 0.646,
                                     BuildingType.CITY_EDGE_POINT, 0.1
                             ),
                             new Random().nextDouble() / 5

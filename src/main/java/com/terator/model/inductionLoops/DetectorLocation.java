@@ -1,6 +1,6 @@
 package com.terator.model.inductionLoops;
 
-import com.terator.model.Location;
+import org.openstreetmap.atlas.geography.Location;
 
 import java.util.Set;
 

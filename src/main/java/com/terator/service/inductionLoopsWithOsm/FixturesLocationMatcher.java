@@ -1,12 +1,11 @@
 package com.terator.service.inductionLoopsWithOsm;
 
-import com.terator.model.Location;
 import com.terator.model.inductionLoops.DetectorLocation;
 import com.terator.model.inductionLoopsWithOsm.SimulationSegmentWithDistance;
 import com.terator.model.simulation.SimulationSegment;
 import com.terator.service.inductionLoops.InductionLoopsDataExtractor;
-import com.terator.service.trajectoryListCreator.LocationExtractor;
 import lombok.RequiredArgsConstructor;
+import org.openstreetmap.atlas.geography.Location;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
@@ -33,8 +32,12 @@ public class FixturesLocationMatcher {
     public Map<DetectorLocation, SimulationSegment> findAllMatchingSegmentsToDetectors(
             Set<SimulationSegment> existingSegmentsFromSimulation
     ) {
-        var detectorsWithLocations = inductionLoopsDataExtractor.extractData();
-        return findMatchingSegmentsToDetectors(detectorsWithLocations, existingSegmentsFromSimulation);
+        if (existingSegmentsFromSimulation.isEmpty()) {
+            return Map.of();
+        } else {
+            var detectorsWithLocations = inductionLoopsDataExtractor.extractData();
+            return findMatchingSegmentsToDetectors(detectorsWithLocations, existingSegmentsFromSimulation);
+        }
     }
 
     private Map<DetectorLocation, SimulationSegment> findMatchingSegmentsToDetectors(
@@ -108,8 +111,7 @@ public class FixturesLocationMatcher {
 
     private double distanceFromLocationToSimulationSegment(SimulationSegment simulationSegment, Location location) {
         var polyline = simulationSegment.edge().asPolyLine();
-        var atlasLocation = LocationExtractor.fromTeratorLocation(location);
-        var distance = atlasLocation.snapTo(polyline).getDistance();
+        var distance = location.snapTo(polyline).getDistance();
         return distance.asMeters();
     }
 
@@ -124,6 +126,8 @@ public class FixturesLocationMatcher {
         System.out.println(
                 locationEnd.getLatitude().asDegrees() + "," + locationEnd.getLongitude().asDegrees() + ",#ff0000");
         locationsFromInductionLoopData.forEach(
-                location -> System.out.println(location.latitude() + "," + location.longitude() + ",#75a481"));
+                location -> System.out.println(
+                        location.getLatitude().asDegrees() + "," + location.getLongitude().asDegrees() +
+                                ",#75a481"));
     }
 }

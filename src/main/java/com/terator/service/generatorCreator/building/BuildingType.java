@@ -1,32 +1,27 @@
 package com.terator.service.generatorCreator.building;
 
 import com.terator.model.City;
+import com.terator.model.LocationWithMetaSpecificParameter;
 import com.terator.model.generatorTable.FromBuildingTypeGenerator;
 import com.terator.service.generatorCreator.DataExtractor;
-import org.openstreetmap.atlas.geography.atlas.items.AtlasEntity;
+import lombok.AllArgsConstructor;
+import lombok.Getter;
 
 import java.util.List;
 import java.util.function.Function;
 
+@AllArgsConstructor
 public enum BuildingType {
     HOUSE(new FromHouseStrategy(), city -> DataExtractor.extractLivingPlaces(city.entities())),
-    OFFICE(new FromOfficeStrategy(), city -> DataExtractor.extractOfficePlaces(city.entities()));
+    OFFICE(new FromOfficeStrategy(), city -> DataExtractor.extractOfficePlaces(city.entities())),
+    CITY_EDGE_POINT(new FromCityEdgePointStrategy(), city -> DataExtractor.extractCityEdgePoints(city.atlas()));
 
     private final FromBuildingTypeStrategy fromBuildingTypeStrategy;
-    private final Function<City, List<AtlasEntity>> entitiesProvider;
 
-    BuildingType(FromBuildingTypeStrategy fromBuildingTypeStrategy,
-                 Function<City, List<AtlasEntity>> entitiesProvider
-    ) {
-        this.fromBuildingTypeStrategy = fromBuildingTypeStrategy;
-        this.entitiesProvider = entitiesProvider;
-    }
+    @Getter
+    private final Function<City, List<? extends LocationWithMetaSpecificParameter>> entitiesProvider;
 
     public FromBuildingTypeGenerator getFromBuildingTypeGenerator() {
         return fromBuildingTypeStrategy.createGenerator();
-    }
-
-    public Function<City, List<AtlasEntity>> getEntitiesProvider() {
-        return entitiesProvider;
     }
 }

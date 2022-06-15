@@ -1,7 +1,6 @@
 package com.terator.controler;
 
-import com.terator.model.Trajectories;
-import com.terator.model.generatorTable.Probabilities;
+import com.terator.model.GeneratedTrajectoriesAccuracy;
 import com.terator.service.TeratorExecutor;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -15,8 +14,8 @@ public class GeneratorController {
     private final TeratorExecutor teratorExecutor;
 
     @GetMapping("/")
-    public Trajectories getTrajectories(@RequestParam String fileName) {
-        var mockPath = "D:\\agh\\magisterka\\terator\\src\\main\\resources\\map_czarnowiejska.osm.pbf";
+    public GeneratedTrajectoriesAccuracy getTrajectories(@RequestParam String fileName) {
+        var mockPath = "D:\\agh\\magisterka\\terator\\map_czarnowiejska.osm.pbf";
 
         return teratorExecutor.execute(mockPath);
     }

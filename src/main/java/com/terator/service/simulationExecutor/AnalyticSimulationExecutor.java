@@ -7,7 +7,6 @@ import com.terator.model.Trajectories;
 import com.terator.model.simulation.DensityInTime;
 import com.terator.model.simulation.SimulationSegment;
 import com.terator.model.simulation.SimulationState;
-import com.terator.service.trajectoryListCreator.LocationExtractor;
 import lombok.RequiredArgsConstructor;
 import org.openstreetmap.atlas.geography.atlas.Atlas;
 import org.openstreetmap.atlas.geography.atlas.items.Edge;
@@ -52,8 +51,8 @@ public class AnalyticSimulationExecutor implements SimulationExecutor {
     }
 
     private Optional<Route> createRoute(SingleTrajectory singleTrajectory, Atlas atlas) {
-        var startLocation = LocationExtractor.fromTeratorLocation(singleTrajectory.startLocation());
-        var endLocation = LocationExtractor.fromTeratorLocation(singleTrajectory.endLocation());
+        var startLocation = singleTrajectory.startLocation();
+        var endLocation = singleTrajectory.endLocation();
 
         final Route route =
                 AStarRouter.fastComputationAndSubOptimalRoute(atlas, Distance.MAXIMUM)

@@ -107,7 +107,8 @@ public class SimpleAccuracyChecker implements AccuracyChecker {
 
             locationsToBeMatched.forEach(
                     location -> System.out.println(
-                            location.latitude() + "," + location.longitude() + "," + colorCode));
+                            location.getLatitude().asDegrees() + "," + location.getLongitude().asDegrees() + "," +
+                                    colorCode));
         });
     }
 

@@ -1,11 +1,13 @@
 package com.terator.service.inductionLoops;
 
-import com.terator.model.Location;
 import com.terator.model.inductionLoops.DetectorLocation;
 import com.terator.model.inductionLoops.DetectorsWithSegmentId;
 import com.terator.model.inductionLoops.Fixture;
 import com.terator.model.inductionLoops.InfluenceDetectorSegment;
 import lombok.RequiredArgsConstructor;
+import org.openstreetmap.atlas.geography.Latitude;
+import org.openstreetmap.atlas.geography.Location;
+import org.openstreetmap.atlas.geography.Longitude;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -50,7 +52,10 @@ public class InductionLoopsDataExtractor {
 
     private Set<Location> extractLocations(List<Fixture> fixturesInSegment) {
         return fixturesInSegment.stream()
-                .map(fixture -> new Location(fixture.getLon().doubleValue(), fixture.getLat().doubleValue()))
+                .map(fixture -> new Location(
+                        Latitude.degrees(fixture.getLat().doubleValue()),
+                        Longitude.degrees(fixture.getLon().doubleValue())
+                ))
                 .collect(Collectors.toSet());
     }
 
