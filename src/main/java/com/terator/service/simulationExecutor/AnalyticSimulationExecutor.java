@@ -12,7 +12,9 @@ import org.openstreetmap.atlas.geography.atlas.Atlas;
 import org.openstreetmap.atlas.geography.atlas.items.Edge;
 import org.openstreetmap.atlas.geography.atlas.items.Route;
 import org.openstreetmap.atlas.geography.atlas.routing.AStarRouter;
+import org.openstreetmap.atlas.tags.MaxSpeedTag;
 import org.openstreetmap.atlas.utilities.scalars.Distance;
+import org.openstreetmap.atlas.utilities.scalars.Speed;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
@@ -100,11 +102,15 @@ public class AnalyticSimulationExecutor implements SimulationExecutor {
 
     /**
      * calculate how long vehicle could move between two nodes if there was no traffic etc.
-     * Uses static road info like length and number of lines
+     * Uses static road info: edge length and max speed
      */
     private Duration durationBasedOnLengthAndNumberOfLanes(SimulationSegment simulationSegment) {
-        //todo
-        return Duration.ofMinutes(10);
+        final Edge edge = simulationSegment.edge();
+        var edgeLengthMeters = edge.length().asMeters();
+        var maxSpeedMetersPerSecond = MaxSpeedTag.get(edge).orElse(Speed.kilometersPerHour(50)).asMetersPerSecond();
+
+        var timeInSeconds = edgeLengthMeters / maxSpeedMetersPerSecond;
+        return Duration.ofSeconds((long) timeInSeconds);
     }
 
     /**

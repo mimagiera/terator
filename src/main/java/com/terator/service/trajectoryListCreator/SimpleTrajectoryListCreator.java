@@ -133,7 +133,7 @@ public class SimpleTrajectoryListCreator implements TrajectoryListCreator {
             ProbabilitiesAndNumberOfDrawsFromBuilding fromBuildingTypeGenerator,
             LocationWithMetaSpecificParameter locationWithMetaSpecificParameter
     ) {
-        var buildingSurfaceArea = locationWithMetaSpecificParameter.getMetaSpecificValue();
+        var metaSpecificValue = locationWithMetaSpecificParameter.getMetaSpecificValue();
         return fromBuildingTypeGenerator
                 .probabilitiesInTime()
                 .entrySet()
@@ -141,7 +141,7 @@ public class SimpleTrajectoryListCreator implements TrajectoryListCreator {
                 .flatMap(timeWithDestinationProbabilities -> {
                     var startTime = getRandomStartTime(timeWithDestinationProbabilities);
                     var destinationsInTime =
-                            calculateDestinationTypes(timeWithDestinationProbabilities.getValue(), buildingSurfaceArea);
+                            calculateDestinationTypes(timeWithDestinationProbabilities.getValue(), metaSpecificValue);
                     return destinationsInTime.stream().map(destinationType -> new Pair<>(startTime, destinationType));
                 })
                 .collect(Collectors.toList());
@@ -157,12 +157,12 @@ public class SimpleTrajectoryListCreator implements TrajectoryListCreator {
 
     private List<BuildingType> calculateDestinationTypes(
             ProbabilitiesAndNumberOfDrawsFromBuildingInSpecificTime probabilitiesAndNumberOfDrawsFromBuildingInSpecificTime,
-            double buildingSurfaceArea
+            double metaSpecificValue
     ) {
         var numberOfDraws =
                 getNumberOfDraws(
                         probabilitiesAndNumberOfDrawsFromBuildingInSpecificTime.expectedNumberOfDraws(),
-                        buildingSurfaceArea);
+                        metaSpecificValue);
         if (numberOfDraws > 0) {
             var probabilityToType = probabilitiesAndNumberOfDrawsFromBuildingInSpecificTime.probabilityToType();
             List<Pair<BuildingType, Double>> itemWeights =
@@ -181,10 +181,10 @@ public class SimpleTrajectoryListCreator implements TrajectoryListCreator {
         }
     }
 
-    private int getNumberOfDraws(double expectedNumberOfDrawsFotBuildingType, double buildingSurfaceArea) {
+    private int getNumberOfDraws(double expectedNumberOfDrawsForBuildingType, double metaSpecificValue) {
         double areaConst = 1d / 3000d;
 
-        var expectedNumberOfDrawsBasedOnArea = expectedNumberOfDrawsFotBuildingType * buildingSurfaceArea * areaConst;
+        var expectedNumberOfDrawsBasedOnArea = expectedNumberOfDrawsForBuildingType * metaSpecificValue * areaConst;
         return (int) random.nextGaussian(expectedNumberOfDrawsBasedOnArea, 1.5);
     }
 }
