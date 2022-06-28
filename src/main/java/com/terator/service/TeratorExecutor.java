@@ -18,6 +18,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 
+import java.time.DayOfWeek;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
@@ -26,6 +27,12 @@ import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 import java.util.stream.StreamSupport;
+
+import static java.time.DayOfWeek.FRIDAY;
+import static java.time.DayOfWeek.MONDAY;
+import static java.time.DayOfWeek.THURSDAY;
+import static java.time.DayOfWeek.TUESDAY;
+import static java.time.DayOfWeek.WEDNESDAY;
 
 @Service
 @RequiredArgsConstructor
@@ -43,6 +50,8 @@ public class TeratorExecutor {
     private final FixturesLocationMatcher fixturesLocationMatcher;
 
     private final AggregatedTrafficBySegmentService aggregatedTrafficBySegmentService;
+
+    private static final Set<DayOfWeek> WEEK_DAYS_NO_WEEKEND = Set.of(MONDAY, TUESDAY, WEDNESDAY, THURSDAY, FRIDAY);
 
     public GeneratedTrajectoriesAccuracy execute(String osmFile) {
         // executed once
@@ -109,6 +118,7 @@ public class TeratorExecutor {
 
     private Map<Integer, Set<AggregatedTrafficBySegment>> getAggregatedTrafficBySegments() {
         return StreamSupport.stream(aggregatedTrafficBySegmentService.getAll().spliterator(), false)
+                .filter(traffic -> WEEK_DAYS_NO_WEEKEND.contains(traffic.getDate().getDayOfWeek()))
                 .collect(Collectors.groupingBy(AggregatedTrafficBySegment::getSegmentId, Collectors.toSet()));
     }
 

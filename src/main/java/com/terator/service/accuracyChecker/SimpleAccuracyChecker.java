@@ -2,7 +2,7 @@ package com.terator.service.accuracyChecker;
 
 import com.terator.model.GeneratedTrajectoriesAccuracy;
 import com.terator.model.SimulationResult;
-import com.terator.model.accuracyChecker.AccuracyInHour;
+import com.terator.model.accuracyChecker.ResultToCompareInHour;
 import com.terator.model.accuracyChecker.AccuracyInSegment;
 import com.terator.model.inductionLoops.AggregatedTrafficBySegment;
 import com.terator.model.inductionLoops.DetectorLocation;
@@ -56,7 +56,7 @@ public class SimpleAccuracyChecker implements AccuracyChecker {
             DensityInTime dataFromSimulation,
             Set<AggregatedTrafficBySegment> dataFromInductionLoops
     ) {
-        var averageCountPerHour = dataFromInductionLoops.stream()
+        var dataFromInductionLoopsPerHour = dataFromInductionLoops.stream()
                 .collect(Collectors.groupingBy(
                         AggregatedTrafficBySegment::getHour,
                         Collectors.mapping(AggregatedTrafficBySegment::getCount, Collectors.averagingInt(a -> a))
@@ -70,17 +70,17 @@ public class SimpleAccuracyChecker implements AccuracyChecker {
                         Long::sum
                 ));
 
-        var accuracyInHours = IntStream.rangeClosed(0, 23)
+        var resultsInHours = IntStream.rangeClosed(0, 23)
                 .boxed()
                 .collect(Collectors.toMap(
                         Function.identity(),
-                        hour -> new AccuracyInHour(
+                        hour -> new ResultToCompareInHour(
                                 dataFromSimulationPerHour.getOrDefault(hour, 0L),
-                                averageCountPerHour.getOrDefault(hour, 0d)
+                                dataFromInductionLoopsPerHour.getOrDefault(hour, 0d)
                         )
                 ));
 
-        var accuracy = accuracyInHours.values().stream()
+        var accuracy = resultsInHours.values().stream()
                 .map(accuracyInHour -> {
                     var fromSimulation = accuracyInHour.countFromSimulation();
                     var fromInductionLoops = accuracyInHour.averageCountFromInductionLoops();
@@ -94,7 +94,7 @@ public class SimpleAccuracyChecker implements AccuracyChecker {
                 .average()
                 .getAsDouble();
 
-        return new AccuracyInSegment(accuracyInHours, accuracy);
+        return new AccuracyInSegment(resultsInHours, accuracy);
     }
 
     private void printAllLocations(Set<DetectorLocation> detectorsWithLocations) {
