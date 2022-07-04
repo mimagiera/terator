@@ -87,10 +87,10 @@ public class FixturesLocationMatcher {
 
 //        printLocations(locationsFromInductionLoopData, theMostOftenTheClosestSegmentWithDistances);
 
-        LOGGER.info("The most often closest distances. [size, locations size]: [{}, {}] : {}",
-                theMostOftenTheClosestSegmentWithDistances.getValue().size(),
-                locationsFromInductionLoopData.size(),
-                theMostOftenTheClosestSegmentWithDistances.getValue());
+//        LOGGER.info("The most often closest distances. [size, locations size]: [{}, {}] : {}",
+//                theMostOftenTheClosestSegmentWithDistances.getValue().size(),
+//                locationsFromInductionLoopData.size(),
+//                theMostOftenTheClosestSegmentWithDistances.getValue());
 
         return Optional.of(theMostOftenTheClosestSegmentWithDistances.getKey());
     }

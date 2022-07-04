@@ -1,27 +1,27 @@
 package com.terator.service.simulationExecutor;
 
-import com.terator.model.simulation.DensityInTime;
+import com.terator.model.simulation.NumberOfCarsInTime;
 import org.springframework.stereotype.Service;
 
 import java.time.Duration;
 import java.time.LocalTime;
 import java.util.stream.IntStream;
 
-import static com.terator.model.simulation.DensityInTime.MINUTES_INTERVAL_SIMULATOR;
+import static com.terator.model.simulation.NumberOfCarsInTime.MINUTES_INTERVAL_SIMULATOR;
 import static java.time.temporal.ChronoUnit.SECONDS;
 
 @Service
 public class TimeCalculations {
 
-    DensityInTime updateDensity(DensityInTime previousDensity, LocalTime startTime, Duration timeInStep) {
+    NumberOfCarsInTime updateDensity(NumberOfCarsInTime previousDensity, LocalTime startTime, Duration timeInStep) {
         return updateDensity(previousDensity, startTime, timeInStep, MINUTES_INTERVAL_SIMULATOR);
     }
 
-    DensityInTime updateDensity(DensityInTime previousDensity, LocalTime startTime, Duration timeInStep,
-                                int minutesIntervalSimulator
+    NumberOfCarsInTime updateDensity(NumberOfCarsInTime previousDensity, LocalTime startTime, Duration timeInStep,
+                                     int minutesIntervalSimulator
     ) {
         var simulationBasedTime = findTimeInSimulation(startTime, minutesIntervalSimulator);
-        var initialDensity = previousDensity.density();
+        var initialDensity = previousDensity.numberOfCars();
 
         long numberOfUpdates =
                 calculateNumberOfUpdates(startTime, timeInStep, minutesIntervalSimulator, simulationBasedTime);
@@ -32,7 +32,7 @@ public class TimeCalculations {
                     initialDensity.put(timeToBeUpdated, initialDensity.getOrDefault(timeToBeUpdated, 0L) + 1);
                 });
 
-        return new DensityInTime(initialDensity);
+        return new NumberOfCarsInTime(initialDensity);
     }
 
     private long calculateNumberOfUpdates(LocalTime startTime, Duration timeInStep, int minutesIntervalSimulator,

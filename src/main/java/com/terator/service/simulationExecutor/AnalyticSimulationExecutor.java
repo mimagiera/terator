@@ -4,7 +4,7 @@ import com.terator.model.City;
 import com.terator.model.SimulationResult;
 import com.terator.model.SingleTrajectory;
 import com.terator.model.Trajectories;
-import com.terator.model.simulation.DensityInTime;
+import com.terator.model.simulation.NumberOfCarsInTime;
 import com.terator.model.simulation.SimulationSegment;
 import com.terator.model.simulation.SimulationState;
 import lombok.RequiredArgsConstructor;
@@ -12,6 +12,7 @@ import org.openstreetmap.atlas.geography.atlas.Atlas;
 import org.openstreetmap.atlas.geography.atlas.items.Edge;
 import org.openstreetmap.atlas.geography.atlas.items.Route;
 import org.openstreetmap.atlas.geography.atlas.routing.AStarRouter;
+import org.openstreetmap.atlas.tags.LanesTag;
 import org.openstreetmap.atlas.tags.MaxSpeedTag;
 import org.openstreetmap.atlas.utilities.scalars.Distance;
 import org.openstreetmap.atlas.utilities.scalars.Speed;
@@ -26,10 +27,15 @@ import java.util.LinkedList;
 import java.util.Optional;
 import java.util.concurrent.atomic.AtomicReference;
 
+import static com.terator.model.PointOnMapOnRoad.DEFAULT_LANES_NUMBER;
+import static com.terator.model.PointOnMapOnRoad.DEFAULT_MAX_SPEED;
+
 @Service
 @RequiredArgsConstructor
 public class AnalyticSimulationExecutor implements SimulationExecutor {
+    private static final int MAX_NUMBER_OF_CARS_PER_KILOMETER = 200;
     private static final Logger LOGGER = LoggerFactory.getLogger(AnalyticSimulationExecutor.class);
+    public static final int MINIMAL_SPEED = 1;
 
     private final TimeCalculations timeCalculations;
 
@@ -72,12 +78,16 @@ public class AnalyticSimulationExecutor implements SimulationExecutor {
 
         for (Edge edge : edges) {
             var simulationSegment = new SimulationSegment(edge);
-            var densityInSegment = state.getOrDefault(simulationSegment, new DensityInTime(new HashMap<>()));
+            var numberOfCarsInTime = state.getOrDefault(simulationSegment, new NumberOfCarsInTime(new HashMap<>()));
 
-            var timeInSegment = executeStep(simulationSegment, densityInSegment, timeThatCarEnterSegment);
+            var timeInSegment = durationBasedOnLengthAndNumberOfLanes(
+                    simulationSegment,
+                    numberOfCarsInTime,
+                    timeThatCarEnterSegment
+            );
 
             // update map
-            var updatedDensity = timeCalculations.updateDensity(densityInSegment, timeThatCarEnterSegment,
+            var updatedDensity = timeCalculations.updateDensity(numberOfCarsInTime, timeThatCarEnterSegment,
                     timeInSegment);
             state.put(simulationSegment, updatedDensity);
 
@@ -86,44 +96,33 @@ public class AnalyticSimulationExecutor implements SimulationExecutor {
         return new SimulationState(state);
     }
 
-    private Duration executeStep(
-            SimulationSegment simulationSegment,
-            DensityInTime densityInTime,
-            LocalTime timeThatCarEnterSegment
-    ) {
-        var segmentStaticValueBasedOnLengthAndNumberOfLanes = durationBasedOnLengthAndNumberOfLanes(simulationSegment);
-        var segmentDynamicValues = durationBasedOnDynamicSimulationState(
-                simulationSegment,
-                densityInTime,
-                timeThatCarEnterSegment
-        );
-        return segmentStaticValueBasedOnLengthAndNumberOfLanes.plus(segmentDynamicValues);
-    }
-
     /**
      * calculate how long vehicle could move between two nodes if there was no traffic etc.
      * Uses static road info: edge length and max speed
      */
-    private Duration durationBasedOnLengthAndNumberOfLanes(SimulationSegment simulationSegment) {
-        final Edge edge = simulationSegment.edge();
-        var edgeLengthMeters = edge.length().asMeters();
-        var maxSpeedMetersPerSecond = MaxSpeedTag.get(edge).orElse(Speed.kilometersPerHour(50)).asMetersPerSecond();
-
-        var timeInSeconds = edgeLengthMeters / maxSpeedMetersPerSecond;
-        return Duration.ofSeconds((long) timeInSeconds);
-    }
-
-    /**
-     * calculate how much longer vehicle could move between two nodes based on another vehicles on this segment
-     */
-    private Duration durationBasedOnDynamicSimulationState(
-            SimulationSegment simulationSegment,
-            DensityInTime densityInTime,
-            LocalTime timeThatCarEnterSegment
+    private Duration durationBasedOnLengthAndNumberOfLanes(SimulationSegment simulationSegment,
+                                                           NumberOfCarsInTime numberOfCarsInTime,
+                                                           LocalTime timeThatCarEnterSegment
     ) {
-        var simulationBasedTime = timeCalculations.findTimeInSimulation(timeThatCarEnterSegment);
+        final Edge edge = simulationSegment.edge();
+        var edgeLengthKilometers = edge.length().asKilometers();
+        var maxSpeedKilometersPerHour = MaxSpeedTag.get(edge).map(Speed::asKilometersPerHour).orElse(DEFAULT_MAX_SPEED);
+        var lanesNumber = LanesTag.numberOfLanes(edge).orElse(DEFAULT_LANES_NUMBER);
 
-        return Duration.ofSeconds(5); //todo
+        var lengthWithLanesKilometers = edgeLengthKilometers * lanesNumber;
+
+        var simulationBasedTime = timeCalculations.findTimeInSimulation(timeThatCarEnterSegment);
+        var currentNumberOfCars = numberOfCarsInTime.numberOfCars().getOrDefault(simulationBasedTime, 0L);
+        var currentNumberOfCarsPerKilometer =
+                currentNumberOfCars / lengthWithLanesKilometers; // cars per meter on a road
+
+        var speedFromEquation =
+                maxSpeedKilometersPerHour * (1 - currentNumberOfCarsPerKilometer / MAX_NUMBER_OF_CARS_PER_KILOMETER);
+
+        var calculatedSpeed = speedFromEquation <= 0 ? MINIMAL_SPEED : speedFromEquation;
+
+        var timeInSeconds = edgeLengthKilometers / calculatedSpeed * 3600;
+        return Duration.ofSeconds((long) timeInSeconds);
     }
 
 }

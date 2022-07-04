@@ -2,11 +2,11 @@ package com.terator.service.accuracyChecker;
 
 import com.terator.model.GeneratedTrajectoriesAccuracy;
 import com.terator.model.SimulationResult;
-import com.terator.model.accuracyChecker.ResultToCompareInHour;
 import com.terator.model.accuracyChecker.AccuracyInSegment;
+import com.terator.model.accuracyChecker.ResultToCompareInHour;
 import com.terator.model.inductionLoops.AggregatedTrafficBySegment;
 import com.terator.model.inductionLoops.DetectorLocation;
-import com.terator.model.simulation.DensityInTime;
+import com.terator.model.simulation.NumberOfCarsInTime;
 import com.terator.model.simulation.SimulationSegment;
 import com.terator.service.inductionLoops.InductionLoopsDataExtractor;
 import lombok.RequiredArgsConstructor;
@@ -53,7 +53,7 @@ public class SimpleAccuracyChecker implements AccuracyChecker {
     }
 
     private AccuracyInSegment compareDataFromSimulationWithRealData(
-            DensityInTime dataFromSimulation,
+            NumberOfCarsInTime dataFromSimulation,
             Set<AggregatedTrafficBySegment> dataFromInductionLoops
     ) {
         var dataFromInductionLoopsPerHour = dataFromInductionLoops.stream()
@@ -62,7 +62,7 @@ public class SimpleAccuracyChecker implements AccuracyChecker {
                         Collectors.mapping(AggregatedTrafficBySegment::getCount, Collectors.averagingInt(a -> a))
                 ));
 
-        var dataFromSimulationPerHour = dataFromSimulation.density()
+        var dataFromSimulationPerHour = dataFromSimulation.numberOfCars()
                 .entrySet().stream()
                 .collect(Collectors.toMap(
                         localTimeLongEntry -> localTimeLongEntry.getKey().getHour(),

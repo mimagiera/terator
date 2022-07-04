@@ -122,7 +122,6 @@ public class TeratorExecutor {
                 .collect(Collectors.groupingBy(AggregatedTrafficBySegment::getSegmentId, Collectors.toSet()));
     }
 
-
     private static void printElapsedTime(long start, long end, String message) {
         float sec = (end - start) / 1000F;
         LOGGER.info("Elapsed {} seconds: {}", message, sec);

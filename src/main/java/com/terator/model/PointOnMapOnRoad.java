@@ -7,8 +7,8 @@ import org.openstreetmap.atlas.tags.MaxSpeedTag;
 import org.openstreetmap.atlas.utilities.scalars.Speed;
 
 public class PointOnMapOnRoad extends LocationWithMetaSpecificParameter {
-    private static final double DEFAULT_MAX_SPEED = 50d;
-    private static final int DEFAULT_LANES_NUMBER = 1;
+    public static final double DEFAULT_MAX_SPEED = 50d;
+    public static final int DEFAULT_LANES_NUMBER = 1;
     private final Edge edge;
 
     public PointOnMapOnRoad(Location location, Edge edge) {
