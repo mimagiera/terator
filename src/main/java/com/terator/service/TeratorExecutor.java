@@ -1,11 +1,11 @@
 package com.terator.service;
 
+import com.terator.metaheuristic.FindBestGeneratorVariables;
 import com.terator.model.City;
 import com.terator.model.GeneratedTrajectoriesAccuracy;
 import com.terator.model.LocationWithMetaSpecificParameter;
 import com.terator.model.inductionLoops.AggregatedTrafficBySegment;
 import com.terator.service.accuracyChecker.AccuracyChecker;
-import com.terator.service.accuracyImprover.AccuracyImprover;
 import com.terator.service.generatorCreator.GeneratorCreator;
 import com.terator.service.generatorCreator.building.BuildingType;
 import com.terator.service.inductionLoops.AggregatedTrafficBySegmentService;
@@ -25,7 +25,6 @@ import java.util.Map;
 import java.util.Set;
 import java.util.function.Function;
 import java.util.stream.Collectors;
-import java.util.stream.IntStream;
 import java.util.stream.StreamSupport;
 
 import static java.time.DayOfWeek.FRIDAY;
@@ -45,7 +44,6 @@ public class TeratorExecutor {
     private final TrajectoryListCreator trajectoryListCreator;
     private final SimulationExecutor simulationExecutor;
     private final AccuracyChecker accuracyChecker;
-    private final AccuracyImprover accuracyImprover;
 
     private final FixturesLocationMatcher fixturesLocationMatcher;
 
@@ -78,6 +76,9 @@ public class TeratorExecutor {
         printElapsedTime(endGettingAggregatedDataFromInductionLoops, endFindingBuildingsWithTypes,
                 "findingBuildingsWithTypes");
 
+        FindBestGeneratorVariables.doEverything(trajectoryListCreator, fixturesLocationMatcher, accuracyChecker,
+                simulationExecutor, city, allBuildingsByType, aggregatedTrafficBySegments);
+
         // executed multiple times to optimize result
 
         // generate trajectories based on generator
@@ -100,12 +101,9 @@ public class TeratorExecutor {
         );
         long endAccuracy = System.currentTimeMillis();
         printElapsedTime(endSimulationResult, endAccuracy, "accuracy");
-
-        // todo how this should work
-        IntStream.range(0, 5)
-                .forEach(value -> accuracyImprover.improve(probabilities, accuracy));
-
-        return accuracy;
+//
+//        return accuracy;
+        return null;
     }
 
     private Map<BuildingType, List<? extends LocationWithMetaSpecificParameter>> getBuildingsByType(City city) {
@@ -122,7 +120,7 @@ public class TeratorExecutor {
                 .collect(Collectors.groupingBy(AggregatedTrafficBySegment::getSegmentId, Collectors.toSet()));
     }
 
-    private static void printElapsedTime(long start, long end, String message) {
+    public static void printElapsedTime(long start, long end, String message) {
         float sec = (end - start) / 1000F;
         LOGGER.info("Elapsed {} seconds: {}", message, sec);
     }

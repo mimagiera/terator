@@ -5,6 +5,7 @@ import com.terator.model.accuracyChecker.AccuracyInSegment;
 import java.util.Set;
 
 public record GeneratedTrajectoriesAccuracy(
-        Set<AccuracyInSegment> accuracyInSegments
+        Set<AccuracyInSegment> accuracyInSegments,
+        double meanSquaredError
 ) {
 }

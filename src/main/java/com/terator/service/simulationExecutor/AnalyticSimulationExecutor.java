@@ -35,7 +35,7 @@ import static com.terator.model.PointOnMapOnRoad.DEFAULT_MAX_SPEED;
 public class AnalyticSimulationExecutor implements SimulationExecutor {
     private static final int MAX_NUMBER_OF_CARS_PER_KILOMETER = 200;
     private static final Logger LOGGER = LoggerFactory.getLogger(AnalyticSimulationExecutor.class);
-    public static final int MINIMAL_SPEED = 1;
+    public static final int MINIMAL_SPEED_KM_PER_HOUR = 1;
 
     private final TimeCalculations timeCalculations;
 
@@ -50,8 +50,11 @@ public class AnalyticSimulationExecutor implements SimulationExecutor {
                         createRoute(singleTrajectory, city.atlas())
                                 .ifPresent(
                                         route -> simulationState.set(
-                                                simulateRoute(route, simulationState.get(),
-                                                        singleTrajectory.startTime())
+                                                simulateRoute(
+                                                        route,
+                                                        simulationState.get(),
+                                                        singleTrajectory.startTime()
+                                                )
                                         )
                                 ));
 
@@ -119,7 +122,7 @@ public class AnalyticSimulationExecutor implements SimulationExecutor {
         var speedFromEquation =
                 maxSpeedKilometersPerHour * (1 - currentNumberOfCarsPerKilometer / MAX_NUMBER_OF_CARS_PER_KILOMETER);
 
-        var calculatedSpeed = speedFromEquation <= 0 ? MINIMAL_SPEED : speedFromEquation;
+        var calculatedSpeed = speedFromEquation <= 0 ? MINIMAL_SPEED_KM_PER_HOUR : speedFromEquation;
 
         var timeInSeconds = edgeLengthKilometers / calculatedSpeed * 3600;
         return Duration.ofSeconds((long) timeInSeconds);

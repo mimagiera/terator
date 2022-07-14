@@ -8,12 +8,12 @@ import com.terator.model.inductionLoops.AggregatedTrafficBySegment;
 import com.terator.model.inductionLoops.DetectorLocation;
 import com.terator.model.simulation.NumberOfCarsInTime;
 import com.terator.model.simulation.SimulationSegment;
-import com.terator.service.inductionLoops.InductionLoopsDataExtractor;
 import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 
+import java.util.Collection;
 import java.util.Map;
 import java.util.Random;
 import java.util.Set;
@@ -25,7 +25,6 @@ import java.util.stream.IntStream;
 @RequiredArgsConstructor
 public class SimpleAccuracyChecker implements AccuracyChecker {
     private static final Logger LOGGER = LoggerFactory.getLogger(SimpleAccuracyChecker.class);
-    private final InductionLoopsDataExtractor inductionLoopsDataExtractor;
 
     @Override
     public GeneratedTrajectoriesAccuracy checkAccuracy(
@@ -49,7 +48,16 @@ public class SimpleAccuracyChecker implements AccuracyChecker {
                 })
                 .collect(Collectors.toSet());
 
-        return new GeneratedTrajectoriesAccuracy(resultsFromSegments);
+        var meanSquaredError = resultsFromSegments.stream()
+                .map(AccuracyInSegment::accuracyInHours)
+                .map(Map::values)
+                .flatMap(Collection::stream)
+                .map(a -> Math.pow(a.countFromSimulation() - a.averageCountFromInductionLoops(), 2))
+                .mapToDouble(a -> a)
+                .average()
+                .orElse(Double.MAX_VALUE);
+
+        return new GeneratedTrajectoriesAccuracy(resultsFromSegments, meanSquaredError);
     }
 
     private AccuracyInSegment compareDataFromSimulationWithRealData(

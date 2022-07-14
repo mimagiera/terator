@@ -23,7 +23,7 @@ class AnalyticSimulationExecutorTest {
     @Test
     void updateDensityDurationInSeconds() {
         NumberOfCarsInTime initialDensity = new NumberOfCarsInTime(new HashMap<>());
-        var updated = timeCalculations.updateDensity(initialDensity, LocalTime.of(10, 0), Duration.ofSeconds(20), 5);
+        var updated = timeCalculations.updateDensity(initialDensity, LocalTime.of(10, 0), Duration.ofSeconds(20), 300);
 
         var expected = new NumberOfCarsInTime(Map.of(
                 LocalTime.of(10, 0), 1L
@@ -35,7 +35,7 @@ class AnalyticSimulationExecutorTest {
     @Test
     void updateDensity() {
         NumberOfCarsInTime initialDensity = new NumberOfCarsInTime(new HashMap<>());
-        var updated = timeCalculations.updateDensity(initialDensity, LocalTime.of(10, 0), Duration.ofMinutes(9), 5);
+        var updated = timeCalculations.updateDensity(initialDensity, LocalTime.of(10, 0), Duration.ofMinutes(9), 300);
 
         var expected = new NumberOfCarsInTime(Map.of(
                 LocalTime.of(10, 0), 1L,
@@ -48,7 +48,7 @@ class AnalyticSimulationExecutorTest {
     @Test
     void updateDensityLessThenOneSlot() {
         NumberOfCarsInTime initialDensity = new NumberOfCarsInTime(new HashMap<>());
-        var updated = timeCalculations.updateDensity(initialDensity, LocalTime.of(10, 2), Duration.ofMinutes(1), 5);
+        var updated = timeCalculations.updateDensity(initialDensity, LocalTime.of(10, 2), Duration.ofMinutes(1), 300);
 
         var expected = new NumberOfCarsInTime(Map.of(
                 LocalTime.of(10, 0), 1L
@@ -61,7 +61,7 @@ class AnalyticSimulationExecutorTest {
     void updateDensityOverMidnight() {
         NumberOfCarsInTime initialDensity = new NumberOfCarsInTime(new HashMap<>());
         var updated = timeCalculations.updateDensity(initialDensity, LocalTime.of(23, 59), Duration.ofMinutes(5),
-                5);
+                300);
 
         var expected = new NumberOfCarsInTime(Map.of(
                 LocalTime.of(23, 55), 1L,
@@ -75,7 +75,7 @@ class AnalyticSimulationExecutorTest {
     void updateDensityExactlySlots() {
         NumberOfCarsInTime initialDensity = new NumberOfCarsInTime(new HashMap<>());
         var updated = timeCalculations.updateDensity(initialDensity, LocalTime.of(10, 0), Duration.ofMinutes(10),
-                5);
+                300);
 
         var expected = new NumberOfCarsInTime(Map.of(
                 LocalTime.of(10, 0), 1L,
@@ -93,7 +93,7 @@ class AnalyticSimulationExecutorTest {
         NumberOfCarsInTime initialDensity = new NumberOfCarsInTime(density);
 
         var updated = timeCalculations.updateDensity(initialDensity, LocalTime.of(10, 0), Duration.ofMinutes(9),
-                5);
+                300);
 
         var expected = new NumberOfCarsInTime(Map.of(
                 LocalTime.of(9, 55), 1L,

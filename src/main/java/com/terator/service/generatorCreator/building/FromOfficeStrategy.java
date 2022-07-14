@@ -20,7 +20,8 @@ public final class FromOfficeStrategy implements FromBuildingTypeStrategy {
                 new ProbabilitiesAndNumberOfDrawsFromBuilding(createProbabilitiesInTime()),
                 new PerfectDistancesFromBuilding(Map.of(
                         BuildingType.HOUSE, 900,
-                        BuildingType.OFFICE, 1500
+                        BuildingType.OFFICE, 1500,
+                        BuildingType.CITY_EDGE_POINT, 10
                 ))
         );
     }
@@ -37,7 +38,8 @@ public final class FromOfficeStrategy implements FromBuildingTypeStrategy {
                     res.put(first, new ProbabilitiesAndNumberOfDrawsFromBuildingInSpecificTime(
                             Map.of(
                                     BuildingType.HOUSE, 0.03,
-                                    BuildingType.OFFICE, 0.646
+                                    BuildingType.OFFICE, 0.646,
+                                    BuildingType.CITY_EDGE_POINT, 0.12
                             ),
                             new Random().nextDouble() / 5
                     ));

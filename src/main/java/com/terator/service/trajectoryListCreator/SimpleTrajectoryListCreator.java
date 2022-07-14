@@ -126,7 +126,7 @@ public class SimpleTrajectoryListCreator implements TrajectoryListCreator {
     private int getPerfectDistance(PerfectDistancesFromBuilding perfectDistances, BuildingType destinationType) {
         var expectedPerfectDistanceToType =
                 perfectDistances.expectedDistancesToBuildingTypes().get(destinationType);
-        return (int) random.nextGaussian(expectedPerfectDistanceToType, 100);
+        return (int) random.nextGaussian(expectedPerfectDistanceToType, 500);
     }
 
     private List<Pair<LocalTime, BuildingType>> findDestinationTypesWithStartingTime(
