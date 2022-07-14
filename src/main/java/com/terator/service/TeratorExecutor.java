@@ -76,8 +76,8 @@ public class TeratorExecutor {
         printElapsedTime(endGettingAggregatedDataFromInductionLoops, endFindingBuildingsWithTypes,
                 "findingBuildingsWithTypes");
 
-        FindBestGeneratorVariables.doEverything(trajectoryListCreator, fixturesLocationMatcher, accuracyChecker,
-                simulationExecutor, city, allBuildingsByType, aggregatedTrafficBySegments);
+//        FindBestGeneratorVariables.doEverything(trajectoryListCreator, fixturesLocationMatcher, accuracyChecker,
+//                simulationExecutor, city, allBuildingsByType, aggregatedTrafficBySegments);
 
         // executed multiple times to optimize result
 
