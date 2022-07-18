@@ -15,7 +15,7 @@ public class GeneratorController {
 
     @GetMapping("/")
     public GeneratedTrajectoriesAccuracy getTrajectories(@RequestParam String fileName) {
-        var mockPath = "D:\\agh\\magisterka\\terator\\map_czarnowiejska.osm.pbf";
+        var mockPath = "C:\\magisterka\\terator\\map_czarnowiejska.osm.pbf";
 
         return teratorExecutor.execute(mockPath);
     }

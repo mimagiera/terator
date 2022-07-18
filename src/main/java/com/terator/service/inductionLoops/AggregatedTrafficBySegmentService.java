@@ -1,7 +1,6 @@
 package com.terator.service.inductionLoops;
 
 import com.terator.model.inductionLoops.AggregatedTrafficBySegment;
-import com.terator.repository.AggregatedTrafficBySegmentRepository;
 import com.terator.service.inductionLoops.csv.ReadAggregatedTrafficBySegmentFromCsvService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -9,19 +8,9 @@ import org.springframework.stereotype.Service;
 @Service
 @RequiredArgsConstructor
 public class AggregatedTrafficBySegmentService {
-    private final AggregatedTrafficBySegmentRepository aggregatedTrafficBySegmentRepository;
     private final ReadAggregatedTrafficBySegmentFromCsvService readAggregatedTrafficBySegmentFromCsvService;
 
-    public void saveAll(Iterable<AggregatedTrafficBySegment> aggregatedTrafficBySegments) {
-        aggregatedTrafficBySegmentRepository.saveAll(aggregatedTrafficBySegments);
-    }
-
     public Iterable<AggregatedTrafficBySegment> getAll() {
-//        return readAggregatedTrafficBySegmentFromCsvService.getAllFromCsv();
         return readAggregatedTrafficBySegmentFromCsvService.findAll();
-    }
-
-    public Iterable<AggregatedTrafficBySegment> getBySegmentId(Integer segmentId) {
-        return aggregatedTrafficBySegmentRepository.findAggregatedTrafficsBysegmentId(segmentId);
     }
 }
