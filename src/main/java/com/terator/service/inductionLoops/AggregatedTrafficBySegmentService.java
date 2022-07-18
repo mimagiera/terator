@@ -9,13 +9,15 @@ import org.springframework.stereotype.Service;
 @RequiredArgsConstructor
 public class AggregatedTrafficBySegmentService {
     private final AggregatedTrafficBySegmentRepository aggregatedTrafficBySegmentRepository;
+    private final ReadAggregatedTrafficBySegmentFromCsvService readAggregatedTrafficBySegmentFromCsvService;
 
     public void saveAll(Iterable<AggregatedTrafficBySegment> aggregatedTrafficBySegments) {
         aggregatedTrafficBySegmentRepository.saveAll(aggregatedTrafficBySegments);
     }
 
     public Iterable<AggregatedTrafficBySegment> getAll() {
-        return aggregatedTrafficBySegmentRepository.findAll();
+//        return readAggregatedTrafficBySegmentFromCsvService.getAllFromCsv();
+        return readAggregatedTrafficBySegmentFromCsvService.getAllFromCsv();
     }
 
     public Iterable<AggregatedTrafficBySegment> getBySegmentId(Integer segmentId) {

@@ -1,5 +1,7 @@
 package com.terator.model.inductionLoops;
 
+import com.opencsv.bean.CsvBindByPosition;
+import com.opencsv.bean.CsvCustomBindByPosition;
 import lombok.AllArgsConstructor;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
@@ -26,8 +28,11 @@ public class AggregatedTrafficBySegment {
     @Column(name = "segment_id")
     Integer segmentId;
     @Id
+    @CsvCustomBindByPosition(position = 1, converter = LocalDateConverter.class)
     LocalDate date;
     @Id
+    @CsvBindByPosition(position = 2)
     Integer hour;
+    @CsvBindByPosition(position = 3)
     Integer count;
 }
