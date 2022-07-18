@@ -26,6 +26,7 @@ import java.time.LocalDate;
 public class AggregatedTrafficBySegment {
     @Id
     @Column(name = "segment_id")
+    @CsvBindByPosition(position = 0)
     Integer segmentId;
     @Id
     @CsvCustomBindByPosition(position = 1, converter = LocalDateConverter.class)

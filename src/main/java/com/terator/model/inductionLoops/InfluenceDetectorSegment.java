@@ -1,5 +1,6 @@
 package com.terator.model.inductionLoops;
 
+import com.opencsv.bean.CsvBindByPosition;
 import lombok.AllArgsConstructor;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
@@ -23,10 +24,13 @@ import javax.persistence.Table;
 public class InfluenceDetectorSegment {
     @Id
     @Column(name = "detector_id")
+    @CsvBindByPosition(position = 0)
     private Integer detectorId;
 
     @Id
     @Column(name = "segment_id")
+    @CsvBindByPosition(position = 1)
     private Integer segmentId;
+    @CsvBindByPosition(position = 2)
     private Integer influence;
 }

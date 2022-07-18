@@ -4,6 +4,8 @@ import com.terator.model.inductionLoops.DetectorLocation;
 import com.terator.model.inductionLoops.DetectorsWithSegmentId;
 import com.terator.model.inductionLoops.Fixture;
 import com.terator.model.inductionLoops.InfluenceDetectorSegment;
+import com.terator.service.inductionLoops.csv.FixtureFromCsvService;
+import com.terator.service.inductionLoops.csv.InfluenceDetectorSegmentFromCsvService;
 import lombok.RequiredArgsConstructor;
 import org.openstreetmap.atlas.geography.Latitude;
 import org.openstreetmap.atlas.geography.Location;
@@ -17,8 +19,8 @@ import java.util.stream.Collectors;
 @Service
 @RequiredArgsConstructor
 public class InductionLoopsDataExtractor {
-    private final InfluenceDetectorSegmentService influenceDetectorSegmentService;
-    private final FixtureService fixtureService;
+    private final InfluenceDetectorSegmentFromCsvService influenceDetectorSegmentService;
+    private final FixtureFromCsvService fixtureService;
 
     public Set<DetectorsWithSegmentId> getDetectorsWithSegmentId() {
         var allDetectorSegments = influenceDetectorSegmentService.findAll();
