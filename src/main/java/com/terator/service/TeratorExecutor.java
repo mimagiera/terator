@@ -5,14 +5,10 @@ import com.terator.model.City;
 import com.terator.model.GeneratedTrajectoriesAccuracy;
 import com.terator.model.LocationWithMetaSpecificParameter;
 import com.terator.model.inductionLoops.AggregatedTrafficBySegment;
-import com.terator.service.accuracyChecker.AccuracyChecker;
 import com.terator.service.generatorCreator.GeneratorCreator;
 import com.terator.service.generatorCreator.building.BuildingType;
 import com.terator.service.inductionLoops.AggregatedTrafficBySegmentService;
-import com.terator.service.inductionLoopsWithOsm.FixturesLocationMatcher;
 import com.terator.service.osmImporter.OsmImporter;
-import com.terator.service.simulationExecutor.SimulationExecutor;
-import com.terator.service.trajectoryListCreator.TrajectoryListCreator;
 import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -27,11 +23,7 @@ import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.StreamSupport;
 
-import static java.time.DayOfWeek.FRIDAY;
-import static java.time.DayOfWeek.MONDAY;
-import static java.time.DayOfWeek.THURSDAY;
-import static java.time.DayOfWeek.TUESDAY;
-import static java.time.DayOfWeek.WEDNESDAY;
+import static java.time.DayOfWeek.*;
 
 @Service
 @RequiredArgsConstructor
@@ -41,13 +33,10 @@ public class TeratorExecutor {
 
     private final OsmImporter osmImporter;
     private final GeneratorCreator generatorCreator;
-    private final TrajectoryListCreator trajectoryListCreator;
-    private final SimulationExecutor simulationExecutor;
-    private final AccuracyChecker accuracyChecker;
-
-    private final FixturesLocationMatcher fixturesLocationMatcher;
 
     private final AggregatedTrafficBySegmentService aggregatedTrafficBySegmentService;
+
+    private final FindBestGeneratorVariables findBestGeneratorVariables;
 
     private static final Set<DayOfWeek> WEEK_DAYS_NO_WEEKEND = Set.of(MONDAY, TUESDAY, WEDNESDAY, THURSDAY, FRIDAY);
 
@@ -76,33 +65,8 @@ public class TeratorExecutor {
         printElapsedTime(endGettingAggregatedDataFromInductionLoops, endFindingBuildingsWithTypes,
                 "findingBuildingsWithTypes");
 
-//        FindBestGeneratorVariables.doEverything(trajectoryListCreator, fixturesLocationMatcher, accuracyChecker,
-//                simulationExecutor, city, allBuildingsByType, aggregatedTrafficBySegments);
+        findBestGeneratorVariables.doEverything(city, allBuildingsByType, aggregatedTrafficBySegments);
 
-        // executed multiple times to optimize result
-
-        // generate trajectories based on generator
-        var trajectories = trajectoryListCreator.createTrajectories(probabilities, city, allBuildingsByType);
-        long endTrajectories = System.currentTimeMillis();
-        printElapsedTime(endFindingBuildingsWithTypes, endTrajectories, "trajectories");
-
-        // simulate trajectories
-        var simulationResult = simulationExecutor.executeSimulation(city, trajectories);
-        long endSimulationResult = System.currentTimeMillis();
-        printElapsedTime(endTrajectories, endSimulationResult, "simulationResult");
-
-        // find accuracy
-        var detectorLocationToSimulationSegment =
-                fixturesLocationMatcher.findAllMatchingSegmentsToDetectors(
-                        simulationResult.simulationState().state().keySet()
-                );
-        var accuracy = accuracyChecker.checkAccuracy(
-                simulationResult, aggregatedTrafficBySegments, detectorLocationToSimulationSegment
-        );
-        long endAccuracy = System.currentTimeMillis();
-        printElapsedTime(endSimulationResult, endAccuracy, "accuracy");
-//
-//        return accuracy;
         return null;
     }
 

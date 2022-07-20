@@ -1,5 +1,6 @@
 package com.terator.metaheuristic;
 
+import com.google.common.math.Stats;
 import com.terator.model.City;
 import com.terator.model.LocationWithMetaSpecificParameter;
 import com.terator.model.accuracyChecker.AccuracyInSegment;
@@ -19,9 +20,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.stream.IntStream;
 
-import static com.terator.metaheuristic.ProbabilitiesToVariables.BUILDING_TYPES_WITH_ORDER;
-import static com.terator.metaheuristic.ProbabilitiesToVariables.FROM_ONE_TYPE_NUMBER_OF_VARIABLES;
-import static com.terator.metaheuristic.ProbabilitiesToVariables.PROBABILITIES_IN_TIME_SIZE;
+import static com.terator.metaheuristic.ProbabilitiesToVariables.*;
 import static com.terator.service.TeratorExecutor.printElapsedTime;
 
 public class GeneratorProblem extends AbstractDoubleProblem {
@@ -47,13 +46,13 @@ public class GeneratorProblem extends AbstractDoubleProblem {
         this.trajectoryListCreator = trajectoryListCreator;
         this.fixturesLocationMatcher = fixturesLocationMatcher;
         this.accuracyChecker = accuracyChecker;
+        this.simulationExecutor = simulationExecutor;
         this.city = city;
         this.allBuildingsByType = allBuildingsByType;
-        this.simulationExecutor = simulationExecutor;
         this.aggregatedTrafficBySegments = aggregatedTrafficBySegments;
+
         setNumberOfVariables(NUMBER_OF_VARIABLES);
         setNumberOfObjectives(1);
-
         setName("Generator");
 
         List<Double> lowerLimit = new ArrayList<>(getNumberOfVariables());
@@ -64,40 +63,34 @@ public class GeneratorProblem extends AbstractDoubleProblem {
             upperLimit.add(1d);
         }
 
-        // set distances limits
-        IntStream.range(0, BUILDING_TYPES_WITH_ORDER.size())
-                .forEach(buildingTypeNumber -> {
-                    var firstIndexWithDistance =
-                            buildingTypeNumber * FROM_ONE_TYPE_NUMBER_OF_VARIABLES + PROBABILITIES_IN_TIME_SIZE;
-                    IntStream.range(firstIndexWithDistance, firstIndexWithDistance + BUILDING_TYPES_WITH_ORDER.size())
-                            .forEach(indexWithDistance -> {
-                                lowerLimit.set(indexWithDistance, 750d);
-                                upperLimit.set(indexWithDistance, 3000d);
-                            });
-                });
-
-        // set number of draws limits
-        IntStream.range(0, BUILDING_TYPES_WITH_ORDER.size())
-                .forEach(buildingTypeNumber -> IntStream.range(0, 24)
-                        .forEach(hour -> {
-                            var indexOfNumberOfDraws =
-                                    buildingTypeNumber * FROM_ONE_TYPE_NUMBER_OF_VARIABLES +
-                                            hour * (BUILDING_TYPES_WITH_ORDER.size() + 1) +
-                                            BUILDING_TYPES_WITH_ORDER.size();
-                            lowerLimit.set(indexOfNumberOfDraws, 0d);
-                            upperLimit.set(indexOfNumberOfDraws, 5d);
-                        }));
+        setDistancesLimits(lowerLimit, upperLimit);
+        setNumberOfDrawsLimits(lowerLimit, upperLimit);
 
         setVariableBounds(lowerLimit, upperLimit);
     }
 
     @Override
     public DoubleSolution evaluate(DoubleSolution solution) {
+        var results = IntStream.range(0, 2)
+                .mapToDouble(no -> doCalculation(solution, no))
+                .toArray();
+        var stats = Stats.of(results);
+        var meanAccuracy = stats.mean();
+        var stddev = stats.sampleStandardDeviation();
+
+        solution.objectives()[0] = meanAccuracy;
+        solution.attributes().put("stddev", stddev);
+
+        return solution;
+    }
+
+    private double doCalculation(DoubleSolution solution, int no) {
         Probabilities probabilities = ProbabilitiesToVariables.getProbabilities(solution.variables());
 
         var endFindingBuildingsWithTypes = System.currentTimeMillis();
         // generate trajectories based on generator
         var trajectories = trajectoryListCreator.createTrajectories(probabilities, city, allBuildingsByType);
+        solution.attributes().put("trajectories" + no, trajectories);
         long endTrajectories = System.currentTimeMillis();
         printElapsedTime(endFindingBuildingsWithTypes, endTrajectories, "trajectories");
 
@@ -117,9 +110,37 @@ public class GeneratorProblem extends AbstractDoubleProblem {
         long endAccuracy = System.currentTimeMillis();
         printElapsedTime(endSimulationResult, endAccuracy, "accuracy");
 
-        solution.objectives()[0] =
-                accuracy.accuracyInSegments().stream().mapToDouble(AccuracyInSegment::accuracy).average().getAsDouble();
+        double[] doubles = accuracy.accuracyInSegments()
+                .stream()
+                .mapToDouble(AccuracyInSegment::accuracy)
+                .toArray();
 
-        return solution;
+        return Stats.meanOf(doubles);
+    }
+
+    private void setNumberOfDrawsLimits(List<Double> lowerLimit, List<Double> upperLimit) {
+        IntStream.range(0, BUILDING_TYPES_WITH_ORDER.size())
+                .forEach(buildingTypeNumber -> IntStream.range(0, 24)
+                        .forEach(hour -> {
+                            var indexOfNumberOfDraws =
+                                    buildingTypeNumber * FROM_ONE_TYPE_NUMBER_OF_VARIABLES +
+                                            hour * (BUILDING_TYPES_WITH_ORDER.size() + 1) +
+                                            BUILDING_TYPES_WITH_ORDER.size();
+                            lowerLimit.set(indexOfNumberOfDraws, 0d);
+                            upperLimit.set(indexOfNumberOfDraws, 5d);
+                        }));
+    }
+
+    private void setDistancesLimits(List<Double> lowerLimit, List<Double> upperLimit) {
+        IntStream.range(0, BUILDING_TYPES_WITH_ORDER.size())
+                .forEach(buildingTypeNumber -> {
+                    var firstIndexWithDistance =
+                            buildingTypeNumber * FROM_ONE_TYPE_NUMBER_OF_VARIABLES + PROBABILITIES_IN_TIME_SIZE;
+                    IntStream.range(firstIndexWithDistance, firstIndexWithDistance + BUILDING_TYPES_WITH_ORDER.size())
+                            .forEach(indexWithDistance -> {
+                                lowerLimit.set(indexWithDistance, 750d);
+                                upperLimit.set(indexWithDistance, 3000d);
+                            });
+                });
     }
 }

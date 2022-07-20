@@ -5,12 +5,9 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.core.GenericTypeResolver;
 
-import java.io.File;
-import java.io.FileNotFoundException;
-import java.io.FileReader;
-import java.net.URISyntaxException;
-import java.net.URL;
-import java.nio.file.Paths;
+import java.io.IOException;
+import java.io.InputStreamReader;
+import java.io.Reader;
 import java.util.List;
 
 public abstract class ExtractFromCsv<TableType> {
@@ -24,14 +21,14 @@ public abstract class ExtractFromCsv<TableType> {
     }
 
     public List<TableType> findAll() {
-        URL resource = ExtractFromCsv.class.getClassLoader().getResource(fileName);
-        try {
-            File file = Paths.get(resource.toURI()).toFile();
-            return new CsvToBeanBuilder<TableType>(new FileReader(file))
+        var resource = ExtractFromCsv.class.getClassLoader()
+                .getResourceAsStream(fileName);
+        try (Reader targetReader = new InputStreamReader(resource)) {
+            return new CsvToBeanBuilder<TableType>(targetReader)
                     .withType(springGenericType)
                     .build()
                     .parse();
-        } catch (FileNotFoundException | URISyntaxException e) {
+        } catch (IOException e) {
             LOGGER.error("Cannot read from csv", e);
             return List.of();
         }

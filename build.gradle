@@ -3,6 +3,7 @@ plugins {
     id 'io.spring.dependency-management' version '1.0.11.RELEASE'
     id 'java'
     id "io.freefair.lombok" version "6.4.3"
+    id 'com.github.johnrengelman.shadow' version '7.1.2'
 }
 
 group = 'com.terator'
@@ -16,7 +17,11 @@ repositories {
         url "https://repo.osgeo.org/repository/release/"
     }
 }
-
+jar {
+    manifest {
+        attributes "Main-Class": "com.terator.ApplicationWithOptimization"
+    }
+}
 bootRun {
     jvmArgs = ["-Xmx16g"]
 }

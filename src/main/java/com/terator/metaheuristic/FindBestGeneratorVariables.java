@@ -8,6 +8,8 @@ import com.terator.service.generatorCreator.building.BuildingType;
 import com.terator.service.inductionLoopsWithOsm.FixturesLocationMatcher;
 import com.terator.service.simulationExecutor.SimulationExecutor;
 import com.terator.service.trajectoryListCreator.TrajectoryListCreator;
+import lombok.RequiredArgsConstructor;
+import org.springframework.stereotype.Service;
 import org.uma.jmetal.algorithm.Algorithm;
 import org.uma.jmetal.algorithm.singleobjective.differentialevolution.DifferentialEvolutionBuilder;
 import org.uma.jmetal.operator.crossover.impl.DifferentialEvolutionCrossover;
@@ -26,16 +28,20 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+@Service
+@RequiredArgsConstructor
 public class FindBestGeneratorVariables {
     private static final int DEFAULT_NUMBER_OF_CORES = 1;
 
-    public static void doEverything(TrajectoryListCreator trajectoryListCreator,
-                                    FixturesLocationMatcher fixturesLocationMatcher,
-                                    AccuracyChecker accuracyChecker,
-                                    SimulationExecutor simulationExecutor,
-                                    City city,
-                                    Map<BuildingType, List<? extends LocationWithMetaSpecificParameter>> allBuildingsByType,
-                                    Map<Integer, Set<AggregatedTrafficBySegment>> aggregatedTrafficBySegments
+    private final TrajectoryListCreator trajectoryListCreator;
+    private final FixturesLocationMatcher fixturesLocationMatcher;
+    private final AccuracyChecker accuracyChecker;
+    private final SimulationExecutor simulationExecutor;
+
+    public void doEverything(
+            City city,
+            Map<BuildingType, List<? extends LocationWithMetaSpecificParameter>> allBuildingsByType,
+            Map<Integer, Set<AggregatedTrafficBySegment>> aggregatedTrafficBySegments
     ) {
         DoubleProblem problem;
         Algorithm<DoubleSolution> algorithm;
