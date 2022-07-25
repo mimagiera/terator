@@ -44,28 +44,27 @@ public class TeratorExecutor {
         // executed once
         // generateInitialProbabilities
         long startProbabilities = System.currentTimeMillis();
-        var probabilities = generatorCreator.generateProbabilities();
         long endProbabilities = System.currentTimeMillis();
-        printElapsedTime(startProbabilities, endProbabilities, "probabilities");
+        printElapsedTime(startProbabilities, endProbabilities, "probabilities", 0);
 
         // parse OSM file
         var city = osmImporter.importData(osmFile);
         long endCity = System.currentTimeMillis();
-        printElapsedTime(endProbabilities, endCity, "city");
+        printElapsedTime(endProbabilities, endCity, "city", 0);
 
         // fetch data from induction loops
         var aggregatedTrafficBySegments = getAggregatedTrafficBySegments();
         long endGettingAggregatedDataFromInductionLoops = System.currentTimeMillis();
         printElapsedTime(endCity, endGettingAggregatedDataFromInductionLoops,
-                "gettingAggregatedDataFromInductionLoops");
+                "gettingAggregatedDataFromInductionLoops", 0);
 
         // find all building by types
         var allBuildingsByType = getBuildingsByType(city);
         long endFindingBuildingsWithTypes = System.currentTimeMillis();
         printElapsedTime(endGettingAggregatedDataFromInductionLoops, endFindingBuildingsWithTypes,
-                "findingBuildingsWithTypes");
+                "findingBuildingsWithTypes", 0);
 
-        findBestGeneratorVariables.doEverything(city, allBuildingsByType, aggregatedTrafficBySegments);
+        findBestGeneratorVariables.doEverything(city, allBuildingsByType, aggregatedTrafficBySegments, 2);
 
         return null;
     }
@@ -84,8 +83,8 @@ public class TeratorExecutor {
                 .collect(Collectors.groupingBy(AggregatedTrafficBySegment::getSegmentId, Collectors.toSet()));
     }
 
-    public static void printElapsedTime(long start, long end, String message) {
+    public static void printElapsedTime(long start, long end, String message, int threadNumber) {
         float sec = (end - start) / 1000F;
-        LOGGER.info("Elapsed {} seconds: {}", message, sec);
+        LOGGER.info("Thread {}, Elapsed {} seconds: {}", threadNumber, message, sec);
     }
 }

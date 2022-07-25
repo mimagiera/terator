@@ -18,6 +18,10 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.Callable;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 import java.util.stream.IntStream;
 
 import static com.terator.metaheuristic.ProbabilitiesToVariables.*;
@@ -25,6 +29,8 @@ import static com.terator.service.TeratorExecutor.printElapsedTime;
 
 public class GeneratorProblem extends AbstractDoubleProblem {
     private static final int NUMBER_OF_VARIABLES = BUILDING_TYPES_WITH_ORDER.size() * FROM_ONE_TYPE_NUMBER_OF_VARIABLES;
+    public static final String STDDEV_ATTRIBUTE = "stddev";
+    public static final String TRAJECTORIES_ATTRIBUTE = "trajectories";
 
     private final TrajectoryListCreator trajectoryListCreator;
     private final FixturesLocationMatcher fixturesLocationMatcher;
@@ -33,6 +39,7 @@ public class GeneratorProblem extends AbstractDoubleProblem {
     private final Map<BuildingType, List<? extends LocationWithMetaSpecificParameter>> allBuildingsByType;
     private final SimulationExecutor simulationExecutor;
     private final Map<Integer, Set<AggregatedTrafficBySegment>> aggregatedTrafficBySegments;
+    private final int nThreads;
 
     public GeneratorProblem(
             TrajectoryListCreator trajectoryListCreator,
@@ -41,8 +48,8 @@ public class GeneratorProblem extends AbstractDoubleProblem {
             SimulationExecutor simulationExecutor,
             City city,
             Map<BuildingType, List<? extends LocationWithMetaSpecificParameter>> allBuildingsByType,
-            Map<Integer, Set<AggregatedTrafficBySegment>> aggregatedTrafficBySegments
-    ) {
+            Map<Integer, Set<AggregatedTrafficBySegment>> aggregatedTrafficBySegments,
+            int nThreads) {
         this.trajectoryListCreator = trajectoryListCreator;
         this.fixturesLocationMatcher = fixturesLocationMatcher;
         this.accuracyChecker = accuracyChecker;
@@ -50,6 +57,7 @@ public class GeneratorProblem extends AbstractDoubleProblem {
         this.city = city;
         this.allBuildingsByType = allBuildingsByType;
         this.aggregatedTrafficBySegments = aggregatedTrafficBySegments;
+        this.nThreads = nThreads;
 
         setNumberOfVariables(NUMBER_OF_VARIABLES);
         setNumberOfObjectives(1);
@@ -71,33 +79,54 @@ public class GeneratorProblem extends AbstractDoubleProblem {
 
     @Override
     public DoubleSolution evaluate(DoubleSolution solution) {
-        var results = IntStream.range(0, 2)
-                .mapToDouble(no -> doCalculation(solution, no))
-                .toArray();
+        var results = executeInThreads(solution, nThreads);
         var stats = Stats.of(results);
         var meanAccuracy = stats.mean();
-        var stddev = stats.sampleStandardDeviation();
+        var stddev = stats.populationStandardDeviation();
 
         solution.objectives()[0] = meanAccuracy;
-        solution.attributes().put("stddev", stddev);
+        solution.attributes().put(STDDEV_ATTRIBUTE, stddev);
 
         return solution;
     }
 
-    private double doCalculation(DoubleSolution solution, int no) {
+    private double[] executeInThreads(DoubleSolution solution, int nThreads) {
+        ExecutorService executor = Executors.newFixedThreadPool(nThreads);
+
+        var callables = IntStream.range(0, nThreads)
+                .mapToObj(i -> (Callable<Double>) () -> doCalculation(solution, i))
+                .toList();
+
+        try {
+            var results = executor.invokeAll(callables);
+            executor.shutdown();
+            return results.stream().mapToDouble(resultFromThread -> {
+                        try {
+                            return resultFromThread.get();
+                        } catch (InterruptedException | ExecutionException e) {
+                            throw new RuntimeException(e);
+                        }
+                    })
+                    .toArray();
+        } catch (InterruptedException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    private double doCalculation(DoubleSolution solution, int threadNumber) {
         Probabilities probabilities = ProbabilitiesToVariables.getProbabilities(solution.variables());
 
         var endFindingBuildingsWithTypes = System.currentTimeMillis();
         // generate trajectories based on generator
         var trajectories = trajectoryListCreator.createTrajectories(probabilities, city, allBuildingsByType);
-        solution.attributes().put("trajectories" + no, trajectories);
+        solution.attributes().put(TRAJECTORIES_ATTRIBUTE + threadNumber, trajectories);
         long endTrajectories = System.currentTimeMillis();
-        printElapsedTime(endFindingBuildingsWithTypes, endTrajectories, "trajectories");
+        printElapsedTime(endFindingBuildingsWithTypes, endTrajectories, "trajectories", threadNumber);
 
         // simulate trajectories
         var simulationResult = simulationExecutor.executeSimulation(city, trajectories);
         long endSimulationResult = System.currentTimeMillis();
-        printElapsedTime(endTrajectories, endSimulationResult, "simulationResult");
+        printElapsedTime(endTrajectories, endSimulationResult, "simulationResult", threadNumber);
 
         // find accuracy
         var detectorLocationToSimulationSegment =
@@ -108,7 +137,7 @@ public class GeneratorProblem extends AbstractDoubleProblem {
                 simulationResult, aggregatedTrafficBySegments, detectorLocationToSimulationSegment
         );
         long endAccuracy = System.currentTimeMillis();
-        printElapsedTime(endSimulationResult, endAccuracy, "accuracy");
+        printElapsedTime(endSimulationResult, endAccuracy, "accuracy", threadNumber);
 
         double[] doubles = accuracy.accuracyInSegments()
                 .stream()
