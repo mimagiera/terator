@@ -9,7 +9,7 @@ public class ApplicationWithOptimization {
     public static void main(String[] args) {
         ApplicationContext context = new AnnotationConfigApplicationContext("com.terator");
         var teratorExecutor = context.getBean(TeratorExecutor.class);
-        var mockPath = "C:\\magisterka\\terator\\map_czarnowiejska.osm.pbf";
-        teratorExecutor.execute(mockPath);
+        var mockPath = "D:\\agh\\magisterka\\terator\\src\\main\\resources\\krk_min.osm.pbf";
+        teratorExecutor.execute(mockPath, 1);
     }
 }

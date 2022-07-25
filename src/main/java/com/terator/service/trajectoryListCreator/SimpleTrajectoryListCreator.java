@@ -47,7 +47,7 @@ public class SimpleTrajectoryListCreator implements TrajectoryListCreator {
                 )
                 .flatMap(List::stream)
                 .collect(Collectors.toList());
-        LOGGER.debug("Number of all trajectories from: {}", trajectories.size());
+        LOGGER.info("Number of all trajectories from: {}", trajectories.size());
 
         return new Trajectories(trajectories);
     }
@@ -65,11 +65,11 @@ public class SimpleTrajectoryListCreator implements TrajectoryListCreator {
 
                     var startingBuildings = allBuildingsByType.get(startingBuildingType);
 
-                    LOGGER.debug("Number of buildings with type: {}, {}", startingBuildingType,
+                    LOGGER.info("Number of buildings with type: {}, {}", startingBuildingType,
                             startingBuildings.size());
 
                     final List<SingleTrajectory> singleTrajectories = startingBuildings.stream()
-                            .limit(3)
+//                            .limit(3)
                             .map(locationWithMetaSpecificParameter ->
                                     {
                                         var destinationTypesWithStartingTime =
@@ -87,7 +87,7 @@ public class SimpleTrajectoryListCreator implements TrajectoryListCreator {
                             .flatMap(List::stream)
                             .collect(Collectors.toList());
 
-                    LOGGER.debug("Number of trajectories from type: {}, {}", startingBuildingType,
+                    LOGGER.info("Number of trajectories from type: {}, {}", startingBuildingType,
                             singleTrajectories.size());
 
                     return singleTrajectories;

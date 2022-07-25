@@ -20,10 +20,13 @@ import java.util.stream.IntStream;
 import static com.terator.service.generatorCreator.building.BuildingType.CITY_EDGE_POINT;
 import static com.terator.service.generatorCreator.building.BuildingType.HOUSE;
 import static com.terator.service.generatorCreator.building.BuildingType.OFFICE;
+import static com.terator.service.generatorCreator.building.BuildingType.SCHOOL;
+import static com.terator.service.generatorCreator.building.BuildingType.SERVICES;
 
 public final class ProbabilitiesToVariables {
 
-    public static final List<BuildingType> BUILDING_TYPES_WITH_ORDER = List.of(HOUSE, OFFICE, CITY_EDGE_POINT);
+    public static final List<BuildingType> BUILDING_TYPES_WITH_ORDER =
+            List.of(HOUSE, OFFICE, SERVICES, SCHOOL, CITY_EDGE_POINT);
     public static final int PROBABILITIES_IN_TIME_SIZE = 24 * (BUILDING_TYPES_WITH_ORDER.size() + 1);
     public static final int FROM_ONE_TYPE_NUMBER_OF_VARIABLES =
             PROBABILITIES_IN_TIME_SIZE + BUILDING_TYPES_WITH_ORDER.size();

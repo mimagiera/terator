@@ -31,8 +31,11 @@ import org.uma.jmetal.util.evaluator.impl.SequentialSolutionListEvaluator;
 import org.uma.jmetal.util.fileoutput.SolutionListOutput;
 import org.uma.jmetal.util.fileoutput.impl.DefaultFileOutputContext;
 
-import java.io.*;
-import java.util.ArrayList;
+import java.io.File;
+import java.io.FileOutputStream;
+import java.io.FileWriter;
+import java.io.IOException;
+import java.io.ObjectOutputStream;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -46,7 +49,6 @@ public class FindBestGeneratorVariables {
     public static final String RESULTS_DIR = "results";
     public static final String STD_DEV_FILE_NAME = "stddev.tsv";
     private static final Logger LOGGER = LoggerFactory.getLogger(FindBestGeneratorVariables.class);
-    private static final int DEFAULT_NUMBER_OF_CORES = 1;
 
     private final TrajectoryListCreator trajectoryListCreator;
     private final FixturesLocationMatcher fixturesLocationMatcher;
@@ -59,43 +61,30 @@ public class FindBestGeneratorVariables {
             Map<Integer, Set<AggregatedTrafficBySegment>> aggregatedTrafficBySegments,
             int nThreads
     ) {
-        DoubleProblem problem;
-        Algorithm<DoubleSolution> algorithm;
-        DifferentialEvolutionSelection selection;
-        DifferentialEvolutionCrossover crossover;
         SolutionListEvaluator<DoubleSolution> evaluator;
+        if (nThreads == 1) {
+            evaluator = new SequentialSolutionListEvaluator<>();
+        } else {
+            evaluator = new MultiThreadedSolutionListEvaluator<>(nThreads);
+        }
 
-        problem = new GeneratorProblem(trajectoryListCreator, fixturesLocationMatcher, accuracyChecker,
+        DoubleProblem problem = new GeneratorProblem(trajectoryListCreator, fixturesLocationMatcher, accuracyChecker,
                 simulationExecutor, city,
                 allBuildingsByType, aggregatedTrafficBySegments, nThreads);
 
-        var args = new String[]{};
-        int numberOfCores;
-        if (args.length == 1) {
-            numberOfCores = Integer.parseInt(args[0]);
-        } else {
-            numberOfCores = DEFAULT_NUMBER_OF_CORES;
-        }
+        DifferentialEvolutionCrossover crossover = new DifferentialEvolutionCrossover(
+                0.5, 0.5, DifferentialEvolutionCrossover.DE_VARIANT.RAND_1_BIN
+        );
 
-        if (numberOfCores == 1) {
-            evaluator = new SequentialSolutionListEvaluator<>();
-        } else {
-            evaluator = new MultiThreadedSolutionListEvaluator<>(numberOfCores);
-        }
+        DifferentialEvolutionSelection selection = new DifferentialEvolutionSelection();
 
-        crossover =
-                new DifferentialEvolutionCrossover(
-                        0.5, 0.5, DifferentialEvolutionCrossover.DE_VARIANT.RAND_1_BIN);
-        selection = new DifferentialEvolutionSelection();
-
-        algorithm =
-                new DifferentialEvolutionBuilder(problem)
-                        .setCrossover(crossover)
-                        .setSelection(selection)
-                        .setSolutionListEvaluator(evaluator)
-                        .setMaxEvaluations(1)
-                        .setPopulationSize(3)
-                        .build();
+        Algorithm<DoubleSolution> algorithm = new DifferentialEvolutionBuilder(problem)
+                .setCrossover(crossover)
+                .setSelection(selection)
+                .setSolutionListEvaluator(evaluator)
+                .setMaxEvaluations(1)
+                .setPopulationSize(3)
+                .build();
 
         AlgorithmRunner algorithmRunner = new AlgorithmRunner.Executor(algorithm).execute();
 

@@ -19,7 +19,6 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
-import java.util.function.Predicate;
 import java.util.stream.Collectors;
 import java.util.stream.StreamSupport;
 
@@ -29,21 +28,45 @@ public final class DataExtractor {
     /**
      * more at https://wiki.openstreetmap.org/wiki/Pl:Key:building
      */
-    private static final Set<String> LIVING_BUILDING_TYPES = Set.of("apartments", "house");
-    private static final Set<String> OFFICE_BUILDING_TYPES = Set.of("office");
+    private static final Set<String> LIVING_BUILDING_TYPES =
+            Set.of("apartments", "house", "residential", "detached", "dormitory", "semidetached_house", "hotel");
+    private static final Set<String> OFFICE_BUILDING_TYPES = Set.of("office", "warehouse");
+    private static final Set<String> SERVICES_BUILDING_TYPES =
+            Set.of("retail", "commercial", "shop", "library", "supermarket", "sports_centre", "museum");
+    private static final Set<String> SCHOOL_BUILDING_TYPES =
+            Set.of("university", "school", "kindergarten", "college");
 
-    public static List<Building> extractLivingPlaces(List<AtlasEntity> entities) {
-        return extractBuildings(entities, entity -> {
-            var buildingValue = entity.getOsmTags().get(BUILDING);
-            return buildingValue != null && LIVING_BUILDING_TYPES.contains(buildingValue);
-        });
+    public static List<Building> extractLivingBuildings(List<AtlasEntity> entities) {
+        return extractBuildings(entities, LIVING_BUILDING_TYPES);
     }
 
-    public static List<Building> extractOfficePlaces(List<AtlasEntity> entities) {
-        return extractBuildings(entities, entity -> {
-            var buildingValue = entity.getOsmTags().get(BUILDING);
-            return buildingValue != null && OFFICE_BUILDING_TYPES.contains(buildingValue);
-        });
+    public static List<Building> extractOfficeBuildings(List<AtlasEntity> entities) {
+        return extractBuildings(entities, OFFICE_BUILDING_TYPES);
+    }
+
+    public static List<Building> extractServicesBuildings(List<AtlasEntity> entities) {
+        return extractBuildings(entities, SERVICES_BUILDING_TYPES);
+    }
+
+    public static List<Building> extractSchoolBuildings(List<AtlasEntity> entities) {
+        return extractBuildings(entities, SCHOOL_BUILDING_TYPES);
+    }
+
+    private static List<Building> extractBuildings(List<AtlasEntity> entities,
+                                                   Set<String> possibleBuildingTagValues
+    ) {
+        return entities.stream()
+                .filter(entity -> entity.getOsmTags().containsKey(BUILDING))
+                .filter(entity -> possibleBuildingTagValues.contains(entity.getOsmTags().get(BUILDING)))
+                .map(atlasEntity -> LocationExtractor.locationOfAtlas(atlasEntity)
+                        .map(location -> new Pair<>(location, atlasEntity)))
+                .filter(Optional::isPresent)
+                .map(Optional::get)
+                .map(atlasEntityWithLocation -> new Building(
+                        atlasEntityWithLocation.getKey(),
+                        SurfaceAreaCalculator.calculateArea(atlasEntityWithLocation.getValue())
+                ))
+                .collect(Collectors.toList());
     }
 
     public static List<PointOnMapOnRoad> extractCityEdgePoints(Atlas atlas) {
@@ -53,11 +76,12 @@ public final class DataExtractor {
 //                new Location(Latitude.degrees(50.0567500), Longitude.degrees(19.9056300))
 //        );
 
-        //map_czarnowiejska
+        //krk_min.osm.pbf
         var rectangle = Rectangle.forCorners(
-                new Location(Latitude.degrees(50.0620000), Longitude.degrees(19.9123000)),
-                new Location(Latitude.degrees(50.0700000), Longitude.degrees(19.9269000))
+                new Location(Latitude.degrees(50.0522), Longitude.degrees(19.8861)),
+                new Location(Latitude.degrees(50.0768), Longitude.degrees(19.9365))
         );
+
         final List<PointOnMapOnRoad> pointOnMapOnRoads = StreamSupport
                 .stream(atlas.edges().spliterator(), false)
                 .map(edge -> locationOnEdge(edge, rectangle).map(location -> new PointOnMapOnRoad(location, edge)))
@@ -114,23 +138,5 @@ public final class DataExtractor {
             return Optional.of(outsideClosest);
         }
     }
-
-    private static List<Building> extractBuildings(List<AtlasEntity> entities,
-                                                   Predicate<AtlasEntity> additionalPredicate
-    ) {
-        return entities.stream()
-                .filter(entity -> entity.getOsmTags().containsKey(BUILDING))
-                .filter(additionalPredicate)
-                .map(atlasEntity -> LocationExtractor.locationOfAtlas(atlasEntity)
-                        .map(location -> new Pair<>(location, atlasEntity)))
-                .filter(Optional::isPresent)
-                .map(Optional::get)
-                .map(atlasEntityWithLocation -> new Building(
-                        atlasEntityWithLocation.getKey(),
-                        SurfaceAreaCalculator.calculateArea(atlasEntityWithLocation.getValue())
-                ))
-                .collect(Collectors.toList());
-    }
-
 
 }

@@ -18,12 +18,17 @@ import java.time.DayOfWeek;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.StreamSupport;
 
-import static java.time.DayOfWeek.*;
+import static java.time.DayOfWeek.FRIDAY;
+import static java.time.DayOfWeek.MONDAY;
+import static java.time.DayOfWeek.THURSDAY;
+import static java.time.DayOfWeek.TUESDAY;
+import static java.time.DayOfWeek.WEDNESDAY;
 
 @Service
 @RequiredArgsConstructor
@@ -40,7 +45,7 @@ public class TeratorExecutor {
 
     private static final Set<DayOfWeek> WEEK_DAYS_NO_WEEKEND = Set.of(MONDAY, TUESDAY, WEDNESDAY, THURSDAY, FRIDAY);
 
-    public GeneratedTrajectoriesAccuracy execute(String osmFile) {
+    public GeneratedTrajectoriesAccuracy execute(String osmFile, int nThreads) {
         // executed once
         // generateInitialProbabilities
         long startProbabilities = System.currentTimeMillis();
@@ -64,7 +69,7 @@ public class TeratorExecutor {
         printElapsedTime(endGettingAggregatedDataFromInductionLoops, endFindingBuildingsWithTypes,
                 "findingBuildingsWithTypes", 0);
 
-        findBestGeneratorVariables.doEverything(city, allBuildingsByType, aggregatedTrafficBySegments, 2);
+        findBestGeneratorVariables.doEverything(city, allBuildingsByType, aggregatedTrafficBySegments, nThreads);
 
         return null;
     }
@@ -86,5 +91,16 @@ public class TeratorExecutor {
     public static void printElapsedTime(long start, long end, String message, int threadNumber) {
         float sec = (end - start) / 1000F;
         LOGGER.info("Thread {}, Elapsed {} seconds: {}", threadNumber, message, sec);
+    }
+
+    private void findStats(City city,
+                           Map<BuildingType, List<? extends LocationWithMetaSpecificParameter>> allBuildingsByType
+    ) {
+        var buildingsUsed =
+                allBuildingsByType.entrySet().stream().filter(e -> !e.getKey().equals(BuildingType.CITY_EDGE_POINT))
+                        .mapToInt(e -> e.getValue().size()).sum();
+
+        var gr = city.entities().stream().map(e -> e.getOsmTags().get("building")).filter(Objects::nonNull)
+                .collect(Collectors.groupingBy(Function.identity(), Collectors.counting()));
     }
 }

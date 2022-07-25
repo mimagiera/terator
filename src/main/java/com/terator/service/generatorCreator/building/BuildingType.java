@@ -12,8 +12,10 @@ import java.util.function.Function;
 
 @AllArgsConstructor
 public enum BuildingType {
-    HOUSE(new FromHouseStrategy(), city -> DataExtractor.extractLivingPlaces(city.entities())),
-    OFFICE(new FromOfficeStrategy(), city -> DataExtractor.extractOfficePlaces(city.entities())),
+    HOUSE(new FromHouseStrategy(), city -> DataExtractor.extractLivingBuildings(city.entities())),
+    OFFICE(new FromOfficeStrategy(), city -> DataExtractor.extractOfficeBuildings(city.entities())),
+    SERVICES(new FromOfficeStrategy(), city -> DataExtractor.extractServicesBuildings(city.entities())),
+    SCHOOL(new FromOfficeStrategy(), city -> DataExtractor.extractSchoolBuildings(city.entities())),
     CITY_EDGE_POINT(new FromCityEdgePointStrategy(), city -> DataExtractor.extractCityEdgePoints(city.atlas()));
 
     private final FromBuildingTypeStrategy fromBuildingTypeStrategy;

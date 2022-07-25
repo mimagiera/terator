@@ -21,6 +21,8 @@ class ProbabilitiesToVariablesTest {
         Probabilities probabilities = new Probabilities(Map.of(
                 BuildingType.HOUSE, getBuildingTypeGenerator(),
                 BuildingType.OFFICE, getBuildingTypeGenerator(),
+                BuildingType.SERVICES, getBuildingTypeGenerator(),
+                BuildingType.SCHOOL, getBuildingTypeGenerator(),
                 BuildingType.CITY_EDGE_POINT, getBuildingTypeGenerator()
         ));
 
@@ -36,6 +38,8 @@ class ProbabilitiesToVariablesTest {
                 new PerfectDistancesFromBuilding(Map.of(
                         BuildingType.HOUSE, 400,
                         BuildingType.OFFICE, 500,
+                        BuildingType.SERVICES, 500,
+                        BuildingType.SCHOOL, 500,
                         BuildingType.CITY_EDGE_POINT, 10
                 ))
         );
@@ -50,6 +54,8 @@ class ProbabilitiesToVariablesTest {
                             Map.of(
                                     BuildingType.HOUSE, 0.1,
                                     BuildingType.OFFICE, 0.2,
+                                    BuildingType.SERVICES, 0.2,
+                                    BuildingType.SCHOOL, 0.2,
                                     BuildingType.CITY_EDGE_POINT, 0.3
                             ),
                             hour
