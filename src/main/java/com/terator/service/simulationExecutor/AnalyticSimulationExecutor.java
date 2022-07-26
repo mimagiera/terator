@@ -59,11 +59,10 @@ public class AnalyticSimulationExecutor implements SimulationExecutor {
                                                     )
                                             )
                                     );
-                            var i = index.get();
+                            var i = index.incrementAndGet();
                             if (i % 5000 == 0) {
                                 LOGGER.info("Processed {} routes", index);
                             }
-                            index.incrementAndGet();
                         }
                 );
 

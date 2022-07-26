@@ -36,7 +36,7 @@ public class AlgorithmRunner {
 
             var future = executor.submit(algorithm);
             try {
-                future.get(3, TimeUnit.SECONDS);
+                future.get(71 * 60 + 30, TimeUnit.MINUTES);
             } catch (InterruptedException | ExecutionException e) {
                 e.printStackTrace();
             } catch (TimeoutException e) {
