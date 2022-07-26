@@ -3,7 +3,6 @@ package com.terator.metaheuristic;
 import com.google.common.math.Stats;
 import com.terator.model.City;
 import com.terator.model.LocationWithMetaSpecificParameter;
-import com.terator.model.accuracyChecker.AccuracyInSegment;
 import com.terator.model.generatorTable.Probabilities;
 import com.terator.model.inductionLoops.AggregatedTrafficBySegment;
 import com.terator.service.accuracyChecker.AccuracyChecker;
@@ -11,6 +10,8 @@ import com.terator.service.generatorCreator.building.BuildingType;
 import com.terator.service.inductionLoopsWithOsm.FixturesLocationMatcher;
 import com.terator.service.simulationExecutor.SimulationExecutor;
 import com.terator.service.trajectoryListCreator.TrajectoryListCreator;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.uma.jmetal.problem.doubleproblem.impl.AbstractDoubleProblem;
 import org.uma.jmetal.solution.doublesolution.DoubleSolution;
 
@@ -24,13 +25,18 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.stream.IntStream;
 
-import static com.terator.metaheuristic.ProbabilitiesToVariables.*;
+import static com.terator.metaheuristic.ProbabilitiesToVariables.BUILDING_TYPES_WITH_ORDER;
+import static com.terator.metaheuristic.ProbabilitiesToVariables.FROM_ONE_TYPE_NUMBER_OF_VARIABLES;
+import static com.terator.metaheuristic.ProbabilitiesToVariables.PROBABILITIES_IN_TIME_SIZE;
 import static com.terator.service.TeratorExecutor.printElapsedTime;
 
 public class GeneratorProblem extends AbstractDoubleProblem {
+    private static final Logger LOGGER = LoggerFactory.getLogger(GeneratorProblem.class);
+
     private static final int NUMBER_OF_VARIABLES = BUILDING_TYPES_WITH_ORDER.size() * FROM_ONE_TYPE_NUMBER_OF_VARIABLES;
     public static final String STDDEV_ATTRIBUTE = "stddev";
     public static final String TRAJECTORIES_ATTRIBUTE = "trajectories";
+    public static final String ACCURACY_ATTRIBUTE = "accuracy";
 
     private final TrajectoryListCreator trajectoryListCreator;
     private final FixturesLocationMatcher fixturesLocationMatcher;
@@ -49,7 +55,8 @@ public class GeneratorProblem extends AbstractDoubleProblem {
             City city,
             Map<BuildingType, List<? extends LocationWithMetaSpecificParameter>> allBuildingsByType,
             Map<Integer, Set<AggregatedTrafficBySegment>> aggregatedTrafficBySegments,
-            int nThreads) {
+            int nThreads
+    ) {
         this.trajectoryListCreator = trajectoryListCreator;
         this.fixturesLocationMatcher = fixturesLocationMatcher;
         this.accuracyChecker = accuracyChecker;
@@ -99,7 +106,6 @@ public class GeneratorProblem extends AbstractDoubleProblem {
 
         try {
             var results = executor.invokeAll(callables);
-            executor.shutdown();
             return results.stream().mapToDouble(resultFromThread -> {
                         try {
                             return resultFromThread.get();
@@ -109,8 +115,11 @@ public class GeneratorProblem extends AbstractDoubleProblem {
                     })
                     .toArray();
         } catch (InterruptedException e) {
-            throw new RuntimeException(e);
+            LOGGER.error("thread responsible for calculations interrupted but it may be ok");
+        } finally {
+            executor.shutdown();
         }
+        return new double[]{};
     }
 
     private double doCalculation(DoubleSolution solution, int threadNumber) {
@@ -121,12 +130,12 @@ public class GeneratorProblem extends AbstractDoubleProblem {
         var trajectories = trajectoryListCreator.createTrajectories(probabilities, city, allBuildingsByType);
         solution.attributes().put(TRAJECTORIES_ATTRIBUTE + threadNumber, trajectories);
         long endTrajectories = System.currentTimeMillis();
-        printElapsedTime(endFindingBuildingsWithTypes, endTrajectories, "trajectories", threadNumber);
+        printElapsedTime(endFindingBuildingsWithTypes, endTrajectories, "trajectories");
 
         // simulate trajectories
         var simulationResult = simulationExecutor.executeSimulation(city, trajectories);
         long endSimulationResult = System.currentTimeMillis();
-        printElapsedTime(endTrajectories, endSimulationResult, "simulationResult", threadNumber);
+        printElapsedTime(endTrajectories, endSimulationResult, "simulationResult");
 
         // find accuracy
         var detectorLocationToSimulationSegment =
@@ -137,14 +146,11 @@ public class GeneratorProblem extends AbstractDoubleProblem {
                 simulationResult, aggregatedTrafficBySegments, detectorLocationToSimulationSegment
         );
         long endAccuracy = System.currentTimeMillis();
-        printElapsedTime(endSimulationResult, endAccuracy, "accuracy", threadNumber);
+        printElapsedTime(endSimulationResult, endAccuracy, "accuracy");
 
-        double[] doubles = accuracy.accuracyInSegments()
-                .stream()
-                .mapToDouble(AccuracyInSegment::accuracy)
-                .toArray();
+        solution.attributes().put(ACCURACY_ATTRIBUTE + threadNumber, accuracy);
 
-        return Stats.meanOf(doubles);
+        return accuracy.meanSquaredError();
     }
 
     private void setNumberOfDrawsLimits(List<Double> lowerLimit, List<Double> upperLimit) {

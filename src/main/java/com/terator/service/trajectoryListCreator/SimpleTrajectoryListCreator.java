@@ -65,11 +65,10 @@ public class SimpleTrajectoryListCreator implements TrajectoryListCreator {
 
                     var startingBuildings = allBuildingsByType.get(startingBuildingType);
 
-                    LOGGER.info("Number of buildings with type: {}, {}", startingBuildingType,
+                    LOGGER.debug("Number of buildings with type: {}, {}", startingBuildingType,
                             startingBuildings.size());
 
                     final List<SingleTrajectory> singleTrajectories = startingBuildings.stream()
-//                            .limit(3)
                             .map(locationWithMetaSpecificParameter ->
                                     {
                                         var destinationTypesWithStartingTime =

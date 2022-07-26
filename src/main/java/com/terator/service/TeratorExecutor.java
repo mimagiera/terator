@@ -50,24 +50,24 @@ public class TeratorExecutor {
         // generateInitialProbabilities
         long startProbabilities = System.currentTimeMillis();
         long endProbabilities = System.currentTimeMillis();
-        printElapsedTime(startProbabilities, endProbabilities, "probabilities", 0);
+        printElapsedTime(startProbabilities, endProbabilities, "probabilities");
 
         // parse OSM file
         var city = osmImporter.importData(osmFile);
         long endCity = System.currentTimeMillis();
-        printElapsedTime(endProbabilities, endCity, "city", 0);
+        printElapsedTime(endProbabilities, endCity, "city");
 
         // fetch data from induction loops
         var aggregatedTrafficBySegments = getAggregatedTrafficBySegments();
         long endGettingAggregatedDataFromInductionLoops = System.currentTimeMillis();
         printElapsedTime(endCity, endGettingAggregatedDataFromInductionLoops,
-                "gettingAggregatedDataFromInductionLoops", 0);
+                "gettingAggregatedDataFromInductionLoops");
 
         // find all building by types
         var allBuildingsByType = getBuildingsByType(city);
         long endFindingBuildingsWithTypes = System.currentTimeMillis();
         printElapsedTime(endGettingAggregatedDataFromInductionLoops, endFindingBuildingsWithTypes,
-                "findingBuildingsWithTypes", 0);
+                "findingBuildingsWithTypes");
 
         findBestGeneratorVariables.doEverything(city, allBuildingsByType, aggregatedTrafficBySegments, nThreads);
 
@@ -88,9 +88,9 @@ public class TeratorExecutor {
                 .collect(Collectors.groupingBy(AggregatedTrafficBySegment::getSegmentId, Collectors.toSet()));
     }
 
-    public static void printElapsedTime(long start, long end, String message, int threadNumber) {
+    public static void printElapsedTime(long start, long end, String message) {
         float sec = (end - start) / 1000F;
-        LOGGER.info("Thread {}, Elapsed {} seconds: {}", threadNumber, message, sec);
+        LOGGER.info(" Elapsed {} seconds: {}", message, sec);
     }
 
     private void findStats(City city,
@@ -102,5 +102,6 @@ public class TeratorExecutor {
 
         var gr = city.entities().stream().map(e -> e.getOsmTags().get("building")).filter(Objects::nonNull)
                 .collect(Collectors.groupingBy(Function.identity(), Collectors.counting()));
+        int a = 34;
     }
 }

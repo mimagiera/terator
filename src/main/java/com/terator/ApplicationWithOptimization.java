@@ -10,6 +10,6 @@ public class ApplicationWithOptimization {
         ApplicationContext context = new AnnotationConfigApplicationContext("com.terator");
         var teratorExecutor = context.getBean(TeratorExecutor.class);
         var mockPath = "D:\\agh\\magisterka\\terator\\src\\main\\resources\\krk_min.osm.pbf";
-        teratorExecutor.execute(mockPath, 1);
+        teratorExecutor.execute(mockPath, 3);
     }
 }

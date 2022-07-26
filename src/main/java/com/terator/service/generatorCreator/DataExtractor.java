@@ -78,8 +78,8 @@ public final class DataExtractor {
 
         //krk_min.osm.pbf
         var rectangle = Rectangle.forCorners(
-                new Location(Latitude.degrees(50.0522), Longitude.degrees(19.8861)),
-                new Location(Latitude.degrees(50.0768), Longitude.degrees(19.9365))
+                new Location(Latitude.degrees(50.0523), Longitude.degrees(19.8875)),
+                new Location(Latitude.degrees(50.0761), Longitude.degrees(19.9361))
         );
 
         final List<PointOnMapOnRoad> pointOnMapOnRoads = StreamSupport

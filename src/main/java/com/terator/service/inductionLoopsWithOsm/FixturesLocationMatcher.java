@@ -80,7 +80,7 @@ public class FixturesLocationMatcher {
                         .filter(a -> a < MAX_POSSIBLE_AVERAGE_IN_DISTANCES)
                         .average()
                         .isEmpty()) {
-            LOGGER.info("Excluded detector with average distance: {}", average.getAsDouble());
+            LOGGER.debug("Excluded detector with average distance: {}", average.getAsDouble());
 //            printLocations(locationsFromInductionLoopData, theMostOftenTheClosestSegmentWithDistances);
             return Optional.empty();
         }

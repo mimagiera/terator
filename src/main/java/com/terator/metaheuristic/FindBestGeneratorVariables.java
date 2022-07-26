@@ -40,6 +40,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import static com.terator.metaheuristic.GeneratorProblem.ACCURACY_ATTRIBUTE;
 import static com.terator.metaheuristic.GeneratorProblem.STDDEV_ATTRIBUTE;
 import static com.terator.metaheuristic.GeneratorProblem.TRAJECTORIES_ATTRIBUTE;
 
@@ -82,8 +83,8 @@ public class FindBestGeneratorVariables {
                 .setCrossover(crossover)
                 .setSelection(selection)
                 .setSolutionListEvaluator(evaluator)
-                .setMaxEvaluations(1)
-                .setPopulationSize(3)
+                .setMaxEvaluations(90)
+                .setPopulationSize(4)
                 .build();
 
         AlgorithmRunner algorithmRunner = new AlgorithmRunner.Executor(algorithm).execute();
@@ -117,6 +118,7 @@ public class FindBestGeneratorVariables {
 
     private void saveAttributesToFiles(Map<Object, Object> attributes) {
         saveStdDevToFile((Double) attributes.get(STDDEV_ATTRIBUTE));
+        saveAccuracyToFile(attributes);
         saveTrajectoriesToCsvFiles(attributes);
     }
 
@@ -136,12 +138,26 @@ public class FindBestGeneratorVariables {
                 });
     }
 
+    private void saveAccuracyToFile(Map<Object, Object> attributes) {
+        attributes.entrySet().stream()
+                .filter(entry -> entry.getKey().toString().startsWith(ACCURACY_ATTRIBUTE))
+                .forEach(entrySet -> {
+                    final String fileName = entrySet.getKey().toString();
+                    try (FileOutputStream fileOutStdDev = FileUtils.openOutputStream(new File(RESULTS_DIR, fileName))) {
+                        ObjectOutputStream objectOut = new ObjectOutputStream(fileOutStdDev);
+                        objectOut.writeObject(entrySet.getValue());
+                    } catch (IOException e) {
+                        LOGGER.error("Couldn't save accuracy to file", e);
+                    }
+                });
+        LOGGER.info("Accuracy value has been written to files {}", RESULTS_DIR + "/" + ACCURACY_ATTRIBUTE + "{i}");
+    }
+
     private void saveStdDevToFile(Double stddev) {
         try (
                 FileOutputStream fileOutStdDev = FileUtils.openOutputStream(new File(RESULTS_DIR, STD_DEV_FILE_NAME));
-                ObjectOutputStream objectOut = new ObjectOutputStream(fileOutStdDev)
         ) {
-            objectOut.writeUTF(stddev.toString());
+            fileOutStdDev.write(stddev.toString().getBytes());
         } catch (IOException e) {
             LOGGER.error("Couldn't save stddev to file", e);
         }

@@ -25,6 +25,7 @@ import java.time.LocalTime;
 import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.Optional;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
 
 import static com.terator.model.PointOnMapOnRoad.DEFAULT_LANES_NUMBER;
@@ -45,18 +46,26 @@ public class AnalyticSimulationExecutor implements SimulationExecutor {
 
         AtomicReference<SimulationState> simulationState = new AtomicReference<>(new SimulationState(new HashMap<>()));
 
+        AtomicInteger index = new AtomicInteger();
         trajectories.singleTrajectories()
-                .forEach(singleTrajectory ->
-                        createRoute(singleTrajectory, city.atlas())
-                                .ifPresent(
-                                        route -> simulationState.set(
-                                                simulateRoute(
-                                                        route,
-                                                        simulationState.get(),
-                                                        singleTrajectory.startTime()
-                                                )
-                                        )
-                                ));
+                .forEach(singleTrajectory -> {
+                            createRoute(singleTrajectory, city.atlas())
+                                    .ifPresent(
+                                            route -> simulationState.set(
+                                                    simulateRoute(
+                                                            route,
+                                                            simulationState.get(),
+                                                            singleTrajectory.startTime()
+                                                    )
+                                            )
+                                    );
+                            var i = index.get();
+                            if (i % 5000 == 0) {
+                                LOGGER.info("Processed {} routes", index);
+                            }
+                            index.incrementAndGet();
+                        }
+                );
 
         return new SimulationResult(simulationState.get());
     }
