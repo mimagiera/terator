@@ -83,8 +83,8 @@ public class FindBestGeneratorVariables {
                 .setCrossover(crossover)
                 .setSelection(selection)
                 .setSolutionListEvaluator(evaluator)
-                .setMaxEvaluations(90)
-                .setPopulationSize(4)
+                .setMaxEvaluations(25000)
+                .setPopulationSize(10)
                 .build();
 
         AlgorithmRunner algorithmRunner = new AlgorithmRunner.Executor(algorithm).execute();

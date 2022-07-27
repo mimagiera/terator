@@ -57,6 +57,23 @@ public class SimpleAccuracyChecker implements AccuracyChecker {
                 .average()
                 .orElse(Double.MAX_VALUE);
 
+
+        var fromSimulationSum = resultsFromSegments.stream()
+                .map(AccuracyInSegment::accuracyInHours).map(Map::values)
+                .flatMap(Collection::stream)
+                .mapToLong(ResultToCompareInHour::countFromSimulation)
+                .sum();
+
+        var fromInductionLoopsSum = resultsFromSegments.stream()
+                .map(AccuracyInSegment::accuracyInHours).map(Map::values)
+                .flatMap(Collection::stream)
+                .mapToDouble(ResultToCompareInHour::averageCountFromInductionLoops)
+                .sum();
+
+        LOGGER.info("Mean squared error: {}, inductionSum: {}, simulationSum: {}", meanSquaredError,
+                fromInductionLoopsSum, fromSimulationSum);
+
+
         return new GeneratedTrajectoriesAccuracy(resultsFromSegments, meanSquaredError);
     }
 

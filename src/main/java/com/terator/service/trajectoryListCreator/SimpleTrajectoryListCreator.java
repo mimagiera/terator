@@ -66,7 +66,7 @@ public class SimpleTrajectoryListCreator implements TrajectoryListCreator {
 
                     var startingBuildings = allBuildingsByType.get(startingBuildingType);
 
-                    LOGGER.debug("Number of buildings with type: {}, {}", startingBuildingType,
+                    LOGGER.info("Number of buildings with type: {}, {}", startingBuildingType,
                             startingBuildings.size());
 
                     final List<SingleTrajectory> singleTrajectories = startingBuildings.stream()
@@ -88,7 +88,7 @@ public class SimpleTrajectoryListCreator implements TrajectoryListCreator {
                             .flatMap(List::stream)
                             .collect(Collectors.toList());
 
-                    LOGGER.debug("Number of trajectories from type: {}, {}", startingBuildingType,
+                    LOGGER.info("Number of trajectories from type: {}, {}", startingBuildingType,
                             singleTrajectories.size());
 
                     return singleTrajectories;
@@ -141,6 +141,14 @@ public class SimpleTrajectoryListCreator implements TrajectoryListCreator {
                 .stream()
                 .flatMap(timeWithDestinationProbabilities -> {
                     var startTime = getRandomStartTime(timeWithDestinationProbabilities);
+
+//                    var numberOfDraws =
+//                            getNumberOfDraws(
+//                                    timeWithDestinationProbabilities.getValue().expectedNumberOfDraws(),
+//                                    metaSpecificValue);
+//                    if (numberOfDraws > 25)
+//                        System.out.println(numberOfDraws);
+
                     var destinationsInTime =
                             calculateDestinationTypes(timeWithDestinationProbabilities.getValue(), metaSpecificValue);
                     return destinationsInTime.stream().map(destinationType -> new Pair<>(startTime, destinationType));
@@ -164,6 +172,8 @@ public class SimpleTrajectoryListCreator implements TrajectoryListCreator {
                 getNumberOfDraws(
                         probabilitiesAndNumberOfDrawsFromBuildingInSpecificTime.expectedNumberOfDraws(),
                         metaSpecificValue);
+//        if (numberOfDraws > 25)
+//            System.out.println(numberOfDraws);
         if (numberOfDraws > 0) {
             var probabilityToType = probabilitiesAndNumberOfDrawsFromBuildingInSpecificTime.probabilityToType();
             List<Pair<BuildingType, Double>> itemWeights =
@@ -183,7 +193,7 @@ public class SimpleTrajectoryListCreator implements TrajectoryListCreator {
     }
 
     private int getNumberOfDraws(double expectedNumberOfDrawsForBuildingType, double metaSpecificValue) {
-        double areaConst = 1d / 3000d;
+        double areaConst = 1d / 6000d;
 
         var expectedNumberOfDrawsBasedOnArea = expectedNumberOfDrawsForBuildingType * metaSpecificValue * areaConst;
         return (int) random.nextGaussian(expectedNumberOfDrawsBasedOnArea, 1.5);

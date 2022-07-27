@@ -24,6 +24,6 @@ public class SurfaceAreaCalculator {
     }
 
     private static double numberOfFloors(AtlasEntity atlasEntity) {
-        return BuildingLevelsTag.get(atlasEntity).orElse(0d);
+        return BuildingLevelsTag.get(atlasEntity).orElse(1d);
     }
 }
