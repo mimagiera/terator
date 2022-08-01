@@ -162,7 +162,7 @@ public class GeneratorProblem extends AbstractDoubleProblem {
         return routesCreator.createRoutesWithStartTimeInThreads(
                 city,
                 trajectories.singleTrajectories(),
-                2
+                3
         );
     }
 

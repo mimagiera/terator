@@ -10,6 +10,6 @@ public class ApplicationWithOptimization {
         ApplicationContext context = new AnnotationConfigApplicationContext("com.terator");
         var teratorExecutor = context.getBean(TeratorExecutor.class);
         var osmFilePath = "krk_min.osm.pbf";
-        teratorExecutor.execute(osmFilePath, 1);
+        teratorExecutor.execute(osmFilePath, 8);
     }
 }

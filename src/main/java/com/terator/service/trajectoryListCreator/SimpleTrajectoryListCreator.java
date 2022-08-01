@@ -48,7 +48,7 @@ public class SimpleTrajectoryListCreator implements TrajectoryListCreator {
                         probabilities, buildingType, allBuildingsByType)
                 )
                 .flatMap(List::stream)
-                .limit(500)
+//                .limit(500)
                 .collect(Collectors.toList());
         LOGGER.info("Number of all trajectories from: {}", trajectories.size());
         long end = System.currentTimeMillis();

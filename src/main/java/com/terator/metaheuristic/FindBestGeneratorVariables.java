@@ -40,6 +40,7 @@ import java.io.ObjectOutputStream;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.UUID;
 
 import static com.terator.metaheuristic.GeneratorProblem.ACCURACY_ATTRIBUTE;
 import static com.terator.metaheuristic.GeneratorProblem.STDDEV_ATTRIBUTE;
@@ -48,7 +49,7 @@ import static com.terator.metaheuristic.GeneratorProblem.TRAJECTORIES_ATTRIBUTE;
 @Service
 @RequiredArgsConstructor
 public class FindBestGeneratorVariables {
-    public static final String RESULTS_DIR = "results";
+    public static final String RESULTS_DIR = "results" + UUID.randomUUID();
     public static final String STD_DEV_FILE_NAME = "stddev.tsv";
     private static final Logger LOGGER = LoggerFactory.getLogger(FindBestGeneratorVariables.class);
 
@@ -85,8 +86,8 @@ public class FindBestGeneratorVariables {
                 .setCrossover(crossover)
                 .setSelection(selection)
                 .setSolutionListEvaluator(evaluator)
-                .setMaxEvaluations(2)
-                .setPopulationSize(1)
+                .setMaxEvaluations(300)
+                .setPopulationSize(3)
                 .build();
 
         AlgorithmRunner algorithmRunner = new AlgorithmRunner.Executor(algorithm).execute();
