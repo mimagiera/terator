@@ -11,6 +11,7 @@ import com.terator.model.inductionLoops.AggregatedTrafficBySegment;
 import com.terator.service.accuracyChecker.AccuracyChecker;
 import com.terator.service.generatorCreator.building.BuildingType;
 import com.terator.service.inductionLoopsWithOsm.FixturesLocationMatcher;
+import com.terator.service.routesCreator.RoutesCreator;
 import com.terator.service.simulationExecutor.SimulationExecutor;
 import com.terator.service.trajectoryListCreator.TrajectoryListCreator;
 import lombok.RequiredArgsConstructor;
@@ -55,8 +56,9 @@ public class FindBestGeneratorVariables {
     private final FixturesLocationMatcher fixturesLocationMatcher;
     private final AccuracyChecker accuracyChecker;
     private final SimulationExecutor simulationExecutor;
+    private final RoutesCreator routesCreator;
 
-    public void doEverything(
+    public DoubleSolution doEverything(
             City city,
             Map<BuildingType, List<? extends LocationWithMetaSpecificParameter>> allBuildingsByType,
             Map<Integer, Set<AggregatedTrafficBySegment>> aggregatedTrafficBySegments,
@@ -71,7 +73,7 @@ public class FindBestGeneratorVariables {
 
         DoubleProblem problem = new GeneratorProblem(trajectoryListCreator, fixturesLocationMatcher, accuracyChecker,
                 simulationExecutor, city,
-                allBuildingsByType, aggregatedTrafficBySegments, nThreads);
+                allBuildingsByType, routesCreator, aggregatedTrafficBySegments, nThreads);
 
         DifferentialEvolutionCrossover crossover = new DifferentialEvolutionCrossover(
                 0.5, 0.5, DifferentialEvolutionCrossover.DE_VARIANT.RAND_1_BIN
@@ -83,8 +85,8 @@ public class FindBestGeneratorVariables {
                 .setCrossover(crossover)
                 .setSelection(selection)
                 .setSolutionListEvaluator(evaluator)
-                .setMaxEvaluations(25000)
-                .setPopulationSize(10)
+                .setMaxEvaluations(2)
+                .setPopulationSize(1)
                 .build();
 
         AlgorithmRunner algorithmRunner = new AlgorithmRunner.Executor(algorithm).execute();
@@ -95,6 +97,7 @@ public class FindBestGeneratorVariables {
         saveResults(solution, computingTime);
 
         evaluator.shutdown();
+        return solution;
     }
 
     private void saveResults(DoubleSolution solution, long computingTime) {

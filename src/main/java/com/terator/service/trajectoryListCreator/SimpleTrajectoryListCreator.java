@@ -25,6 +25,7 @@ import java.util.Random;
 import java.util.stream.Collectors;
 
 import static com.terator.service.TeratorExecutor.MINUTES_INTERVAL_GENERATOR;
+import static com.terator.service.TeratorExecutor.printElapsedTime;
 
 @Service
 @RequiredArgsConstructor
@@ -41,15 +42,17 @@ public class SimpleTrajectoryListCreator implements TrajectoryListCreator {
             Map<BuildingType, List<? extends LocationWithMetaSpecificParameter>> allBuildingsByType
     ) {
         LOGGER.info("Starting creating trajectories");
+        long start = System.currentTimeMillis();
         var trajectories = Arrays.stream(BuildingType.values())
                 .map(buildingType -> findTrajectoriesFromBuildingType(
                         probabilities, buildingType, allBuildingsByType)
                 )
                 .flatMap(List::stream)
-//                .limit(3)
+                .limit(500)
                 .collect(Collectors.toList());
         LOGGER.info("Number of all trajectories from: {}", trajectories.size());
-
+        long end = System.currentTimeMillis();
+        printElapsedTime(start, end, "creating trajectories", LOGGER);
         return new Trajectories(trajectories);
     }
 
@@ -70,7 +73,6 @@ public class SimpleTrajectoryListCreator implements TrajectoryListCreator {
                             startingBuildings.size());
 
                     final List<SingleTrajectory> singleTrajectories = startingBuildings.stream()
-//                            .limit(3)
                             .map(locationWithMetaSpecificParameter ->
                                     {
                                         var destinationTypesWithStartingTime =
@@ -193,7 +195,7 @@ public class SimpleTrajectoryListCreator implements TrajectoryListCreator {
     }
 
     private int getNumberOfDraws(double expectedNumberOfDrawsForBuildingType, double metaSpecificValue) {
-        double areaConst = 1d / 6000d;
+        double areaConst = 1d / 1500;
 
         var expectedNumberOfDrawsBasedOnArea = expectedNumberOfDrawsForBuildingType * metaSpecificValue * areaConst;
         return (int) random.nextGaussian(expectedNumberOfDrawsBasedOnArea, 1.5);

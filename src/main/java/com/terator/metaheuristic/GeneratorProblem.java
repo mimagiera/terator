@@ -2,19 +2,26 @@ package com.terator.metaheuristic;
 
 import com.google.common.math.Stats;
 import com.terator.model.City;
+import com.terator.model.GeneratedTrajectoriesAccuracy;
 import com.terator.model.LocationWithMetaSpecificParameter;
+import com.terator.model.SimulationResult;
+import com.terator.model.Trajectories;
 import com.terator.model.generatorTable.Probabilities;
 import com.terator.model.inductionLoops.AggregatedTrafficBySegment;
 import com.terator.service.accuracyChecker.AccuracyChecker;
 import com.terator.service.generatorCreator.building.BuildingType;
 import com.terator.service.inductionLoopsWithOsm.FixturesLocationMatcher;
+import com.terator.service.routesCreator.RoutesCreator;
 import com.terator.service.simulationExecutor.SimulationExecutor;
 import com.terator.service.trajectoryListCreator.TrajectoryListCreator;
+import org.apache.commons.lang3.tuple.Pair;
+import org.openstreetmap.atlas.geography.atlas.items.Route;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.uma.jmetal.problem.doubleproblem.impl.AbstractDoubleProblem;
 import org.uma.jmetal.solution.doublesolution.DoubleSolution;
 
+import java.time.LocalTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -28,7 +35,6 @@ import java.util.stream.IntStream;
 import static com.terator.metaheuristic.ProbabilitiesToVariables.BUILDING_TYPES_WITH_ORDER;
 import static com.terator.metaheuristic.ProbabilitiesToVariables.FROM_ONE_TYPE_NUMBER_OF_VARIABLES;
 import static com.terator.metaheuristic.ProbabilitiesToVariables.PROBABILITIES_IN_TIME_SIZE;
-import static com.terator.service.TeratorExecutor.printElapsedTime;
 
 public class GeneratorProblem extends AbstractDoubleProblem {
     private static final Logger LOGGER = LoggerFactory.getLogger(GeneratorProblem.class);
@@ -43,9 +49,15 @@ public class GeneratorProblem extends AbstractDoubleProblem {
     private final AccuracyChecker accuracyChecker;
     private final City city;
     private final Map<BuildingType, List<? extends LocationWithMetaSpecificParameter>> allBuildingsByType;
+    private final RoutesCreator routesCreator;
     private final SimulationExecutor simulationExecutor;
     private final Map<Integer, Set<AggregatedTrafficBySegment>> aggregatedTrafficBySegments;
     private final int nThreads;
+
+    @Override
+    public DoubleSolution createSolution() {
+        return super.createSolution();
+    }
 
     public GeneratorProblem(
             TrajectoryListCreator trajectoryListCreator,
@@ -54,6 +66,7 @@ public class GeneratorProblem extends AbstractDoubleProblem {
             SimulationExecutor simulationExecutor,
             City city,
             Map<BuildingType, List<? extends LocationWithMetaSpecificParameter>> allBuildingsByType,
+            RoutesCreator routesCreator,
             Map<Integer, Set<AggregatedTrafficBySegment>> aggregatedTrafficBySegments,
             int nThreads
     ) {
@@ -63,6 +76,7 @@ public class GeneratorProblem extends AbstractDoubleProblem {
         this.simulationExecutor = simulationExecutor;
         this.city = city;
         this.allBuildingsByType = allBuildingsByType;
+        this.routesCreator = routesCreator;
         this.aggregatedTrafficBySegments = aggregatedTrafficBySegments;
         this.nThreads = nThreads;
 
@@ -123,34 +137,38 @@ public class GeneratorProblem extends AbstractDoubleProblem {
     }
 
     private double doCalculation(DoubleSolution solution, int threadNumber) {
-        Probabilities probabilities = ProbabilitiesToVariables.getProbabilities(solution.variables());
+        var trajectories = createTrajectoriesBasedOnSolution(solution);
+        var routesWithStartTime = creatRoutesBasedOnTrajectories(trajectories);
+        var simulationResult = simulationExecutor.executeSimulation(routesWithStartTime);
+        var accuracy = checkSimulationResult(simulationResult);
 
-        var endFindingBuildingsWithTypes = System.currentTimeMillis();
-        // generate trajectories based on generator
-        var trajectories = trajectoryListCreator.createTrajectories(probabilities, city, allBuildingsByType);
         solution.attributes().put(TRAJECTORIES_ATTRIBUTE + threadNumber, trajectories);
-        long endTrajectories = System.currentTimeMillis();
-        printElapsedTime(endFindingBuildingsWithTypes, endTrajectories, "trajectories");
+        solution.attributes().put(ACCURACY_ATTRIBUTE + threadNumber, accuracy);
 
-        // simulate trajectories
-        var simulationResult = simulationExecutor.executeSimulation(city, trajectories);
-        long endSimulationResult = System.currentTimeMillis();
-        printElapsedTime(endTrajectories, endSimulationResult, "simulationResult");
+        return accuracy.meanSquaredError();
+    }
 
-        // find accuracy
+    private GeneratedTrajectoriesAccuracy checkSimulationResult(SimulationResult simulationResult) {
         var detectorLocationToSimulationSegment =
                 fixturesLocationMatcher.findAllMatchingSegmentsToDetectors(
                         simulationResult.simulationState().state().keySet()
                 );
-        var accuracy = accuracyChecker.checkAccuracy(
+        return accuracyChecker.checkAccuracy(
                 simulationResult, aggregatedTrafficBySegments, detectorLocationToSimulationSegment
         );
-        long endAccuracy = System.currentTimeMillis();
-        printElapsedTime(endSimulationResult, endAccuracy, "accuracy");
+    }
 
-        solution.attributes().put(ACCURACY_ATTRIBUTE + threadNumber, accuracy);
+    private List<Pair<Route, LocalTime>> creatRoutesBasedOnTrajectories(Trajectories trajectories) {
+        return routesCreator.createRoutesWithStartTimeInThreads(
+                city,
+                trajectories.singleTrajectories(),
+                2
+        );
+    }
 
-        return accuracy.meanSquaredError();
+    private Trajectories createTrajectoriesBasedOnSolution(DoubleSolution solution) {
+        Probabilities probabilities = ProbabilitiesToVariables.getProbabilities(solution.variables());
+        return trajectoryListCreator.createTrajectories(probabilities, city, allBuildingsByType);
     }
 
     private void setNumberOfDrawsLimits(List<Double> lowerLimit, List<Double> upperLimit) {
@@ -161,8 +179,8 @@ public class GeneratorProblem extends AbstractDoubleProblem {
                                     buildingTypeNumber * FROM_ONE_TYPE_NUMBER_OF_VARIABLES +
                                             hour * (BUILDING_TYPES_WITH_ORDER.size() + 1) +
                                             BUILDING_TYPES_WITH_ORDER.size();
-                            lowerLimit.set(indexOfNumberOfDraws, 0d);
-                            upperLimit.set(indexOfNumberOfDraws, 5d);
+                            lowerLimit.set(indexOfNumberOfDraws, 0.5d);
+                            upperLimit.set(indexOfNumberOfDraws, 5.5d);
                         }));
     }
 

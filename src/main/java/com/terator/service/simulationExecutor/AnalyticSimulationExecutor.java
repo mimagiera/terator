@@ -1,20 +1,15 @@
 package com.terator.service.simulationExecutor;
 
-import com.terator.model.City;
 import com.terator.model.SimulationResult;
-import com.terator.model.SingleTrajectory;
-import com.terator.model.Trajectories;
 import com.terator.model.simulation.NumberOfCarsInTime;
 import com.terator.model.simulation.SimulationSegment;
 import com.terator.model.simulation.SimulationState;
 import lombok.RequiredArgsConstructor;
-import org.openstreetmap.atlas.geography.atlas.Atlas;
+import org.apache.commons.lang3.tuple.Pair;
 import org.openstreetmap.atlas.geography.atlas.items.Edge;
 import org.openstreetmap.atlas.geography.atlas.items.Route;
-import org.openstreetmap.atlas.geography.atlas.routing.AStarRouter;
 import org.openstreetmap.atlas.tags.LanesTag;
 import org.openstreetmap.atlas.tags.MaxSpeedTag;
-import org.openstreetmap.atlas.utilities.scalars.Distance;
 import org.openstreetmap.atlas.utilities.scalars.Speed;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -24,60 +19,41 @@ import java.time.Duration;
 import java.time.LocalTime;
 import java.util.HashMap;
 import java.util.LinkedList;
-import java.util.Optional;
-import java.util.concurrent.atomic.AtomicInteger;
+import java.util.List;
 import java.util.concurrent.atomic.AtomicReference;
 
 import static com.terator.model.PointOnMapOnRoad.DEFAULT_LANES_NUMBER;
 import static com.terator.model.PointOnMapOnRoad.DEFAULT_MAX_SPEED;
+import static com.terator.service.TeratorExecutor.printElapsedTime;
 
 @Service
 @RequiredArgsConstructor
 public class AnalyticSimulationExecutor implements SimulationExecutor {
     private static final int MAX_NUMBER_OF_CARS_PER_KILOMETER = 200;
     private static final Logger LOGGER = LoggerFactory.getLogger(AnalyticSimulationExecutor.class);
+
     public static final int MINIMAL_SPEED_KM_PER_HOUR = 1;
 
     private final TimeCalculations timeCalculations;
 
     @Override
-    public SimulationResult executeSimulation(City city, Trajectories trajectories) {
+    public SimulationResult executeSimulation(List<Pair<Route, LocalTime>> routesWithStartTime) {
         LOGGER.info("Starting executing simulation");
+        long start = System.currentTimeMillis();
 
         AtomicReference<SimulationState> simulationState = new AtomicReference<>(new SimulationState(new HashMap<>()));
+        routesWithStartTime.forEach(routeWithStartTime -> {
+            var newSimulationState = simulateRoute(
+                    routeWithStartTime.getLeft(),
+                    simulationState.get(),
+                    routeWithStartTime.getRight()
+            );
+            simulationState.set(newSimulationState);
+        });
 
-        AtomicInteger index = new AtomicInteger();
-        trajectories.singleTrajectories()
-                .forEach(singleTrajectory -> {
-                            createRoute(singleTrajectory, city.atlas())
-                                    .ifPresent(
-                                            route -> simulationState.set(
-                                                    simulateRoute(
-                                                            route,
-                                                            simulationState.get(),
-                                                            singleTrajectory.startTime()
-                                                    )
-                                            )
-                                    );
-                            var i = index.incrementAndGet();
-                            if (i % 5000 == 0) {
-                                LOGGER.info("Processed {} routes", index);
-                            }
-                        }
-                );
-
+        long end = System.currentTimeMillis();
+        printElapsedTime(start, end, "executing simulation", LOGGER);
         return new SimulationResult(simulationState.get());
-    }
-
-    private Optional<Route> createRoute(SingleTrajectory singleTrajectory, Atlas atlas) {
-        var startLocation = singleTrajectory.startLocation();
-        var endLocation = singleTrajectory.endLocation();
-
-        final Route route =
-                AStarRouter.fastComputationAndSubOptimalRoute(atlas, Distance.MAXIMUM)
-                        .route(startLocation, endLocation);
-
-        return Optional.ofNullable(route);
     }
 
     private SimulationState simulateRoute(Route route, SimulationState simulationState, LocalTime startTime) {

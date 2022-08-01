@@ -21,6 +21,8 @@ import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
+import static com.terator.service.TeratorExecutor.printElapsedTime;
+
 @Service
 @RequiredArgsConstructor
 public class SimpleAccuracyChecker implements AccuracyChecker {
@@ -33,6 +35,8 @@ public class SimpleAccuracyChecker implements AccuracyChecker {
             Map<DetectorLocation, SimulationSegment> detectorLocationToSimulationSegment
     ) {
         LOGGER.info("Starting checking accuracy");
+        long start = System.currentTimeMillis();
+
         var simulationState = simulationResult.simulationState().state();
 
         var resultsFromSegments = detectorLocationToSimulationSegment.entrySet().stream()
@@ -74,6 +78,8 @@ public class SimpleAccuracyChecker implements AccuracyChecker {
                 fromInductionLoopsSum, fromSimulationSum);
 
 
+        long end = System.currentTimeMillis();
+        printElapsedTime(start, end, "checking accuracy", LOGGER);
         return new GeneratedTrajectoriesAccuracy(resultsFromSegments, meanSquaredError);
     }
 

@@ -8,6 +8,8 @@ import org.springframework.stereotype.Service;
 
 import java.util.stream.StreamSupport;
 
+import static com.terator.service.TeratorExecutor.printElapsedTime;
+
 @Service
 @RequiredArgsConstructor
 public class AtlasOsmImporter implements OsmImporter {
@@ -18,10 +20,14 @@ public class AtlasOsmImporter implements OsmImporter {
     @Override
     public City importData(String fileName) {
         LOGGER.info("Starting importing OSM data");
+        long start = System.currentTimeMillis();
+
         var atlas = toAtlasParser.parse(fileName);
         var entities = StreamSupport
                 .stream(atlas.entities().spliterator(), false).toList();
 
+        long end = System.currentTimeMillis();
+        printElapsedTime(start, end, "importing OSM data", LOGGER);
         return new City(entities, atlas);
     }
 }
