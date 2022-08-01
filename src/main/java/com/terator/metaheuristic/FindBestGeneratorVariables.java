@@ -63,18 +63,19 @@ public class FindBestGeneratorVariables {
             City city,
             Map<BuildingType, List<? extends LocationWithMetaSpecificParameter>> allBuildingsByType,
             Map<Integer, Set<AggregatedTrafficBySegment>> aggregatedTrafficBySegments,
-            int nThreads
+            int concurrentSimulations,
+            int concurrentRoutesGenerator
     ) {
         SolutionListEvaluator<DoubleSolution> evaluator;
-        if (nThreads == 1) {
+        if (concurrentSimulations == 1) {
             evaluator = new SequentialSolutionListEvaluator<>();
         } else {
-            evaluator = new MultiThreadedSolutionListEvaluator<>(nThreads);
+            evaluator = new MultiThreadedSolutionListEvaluator<>(concurrentSimulations);
         }
 
         DoubleProblem problem = new GeneratorProblem(trajectoryListCreator, fixturesLocationMatcher, accuracyChecker,
                 simulationExecutor, city,
-                allBuildingsByType, routesCreator, aggregatedTrafficBySegments, nThreads);
+                allBuildingsByType, routesCreator, aggregatedTrafficBySegments, concurrentSimulations, concurrentRoutesGenerator);
 
         DifferentialEvolutionCrossover crossover = new DifferentialEvolutionCrossover(
                 0.5, 0.5, DifferentialEvolutionCrossover.DE_VARIANT.RAND_1_BIN

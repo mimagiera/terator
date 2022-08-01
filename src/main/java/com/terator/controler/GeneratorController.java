@@ -15,7 +15,7 @@ public class GeneratorController {
 
     @GetMapping("/")
     public DoubleSolution getTrajectories(@RequestParam String fileName) {
-        return teratorExecutor.execute(fileName, 1);
+        return teratorExecutor.execute(fileName, 1, 1);
     }
 
 }

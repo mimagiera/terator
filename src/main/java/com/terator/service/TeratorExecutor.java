@@ -2,7 +2,6 @@ package com.terator.service;
 
 import com.terator.metaheuristic.FindBestGeneratorVariables;
 import com.terator.model.City;
-import com.terator.model.GeneratedTrajectoriesAccuracy;
 import com.terator.model.LocationWithMetaSpecificParameter;
 import com.terator.service.generatorCreator.building.BuildingType;
 import com.terator.service.inductionLoops.AggregatedTrafficBySegmentService;
@@ -33,12 +32,12 @@ public class TeratorExecutor {
     private final FindBestGeneratorVariables findBestGeneratorVariables;
 
 
-    public DoubleSolution execute(String osmFile, int nThreads) {
+    public DoubleSolution execute(String osmFile, int concurrentSimulations, int concurrentRoutesGenerator) {
         var city = osmImporter.importData(osmFile);
         var aggregatedTrafficBySegments = aggregatedTrafficBySegmentService.getAggregatedTrafficInWeekdaysBySegments();
         var allBuildingsByType = getBuildingsByType(city);
 
-        return findBestGeneratorVariables.doEverything(city, allBuildingsByType, aggregatedTrafficBySegments, nThreads);
+        return findBestGeneratorVariables.doEverything(city, allBuildingsByType, aggregatedTrafficBySegments, concurrentSimulations, concurrentRoutesGenerator);
     }
 
     private Map<BuildingType, List<? extends LocationWithMetaSpecificParameter>> getBuildingsByType(City city) {

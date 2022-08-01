@@ -52,7 +52,8 @@ public class GeneratorProblem extends AbstractDoubleProblem {
     private final RoutesCreator routesCreator;
     private final SimulationExecutor simulationExecutor;
     private final Map<Integer, Set<AggregatedTrafficBySegment>> aggregatedTrafficBySegments;
-    private final int nThreads;
+    private final int concurrentSimulations;
+    private final int concurrentRoutesGenerator;
 
     @Override
     public DoubleSolution createSolution() {
@@ -68,8 +69,8 @@ public class GeneratorProblem extends AbstractDoubleProblem {
             Map<BuildingType, List<? extends LocationWithMetaSpecificParameter>> allBuildingsByType,
             RoutesCreator routesCreator,
             Map<Integer, Set<AggregatedTrafficBySegment>> aggregatedTrafficBySegments,
-            int nThreads
-    ) {
+            int concurrentSimulations,
+            int concurrentRoutesGenerator) {
         this.trajectoryListCreator = trajectoryListCreator;
         this.fixturesLocationMatcher = fixturesLocationMatcher;
         this.accuracyChecker = accuracyChecker;
@@ -78,7 +79,8 @@ public class GeneratorProblem extends AbstractDoubleProblem {
         this.allBuildingsByType = allBuildingsByType;
         this.routesCreator = routesCreator;
         this.aggregatedTrafficBySegments = aggregatedTrafficBySegments;
-        this.nThreads = nThreads;
+        this.concurrentSimulations = concurrentSimulations;
+        this.concurrentRoutesGenerator = concurrentRoutesGenerator;
 
         setNumberOfVariables(NUMBER_OF_VARIABLES);
         setNumberOfObjectives(1);
@@ -100,7 +102,7 @@ public class GeneratorProblem extends AbstractDoubleProblem {
 
     @Override
     public DoubleSolution evaluate(DoubleSolution solution) {
-        var results = executeInThreads(solution, nThreads);
+        var results = executeInThreads(solution);
         var stats = Stats.of(results);
         var meanAccuracy = stats.mean();
         var stddev = stats.populationStandardDeviation();
@@ -111,10 +113,10 @@ public class GeneratorProblem extends AbstractDoubleProblem {
         return solution;
     }
 
-    private double[] executeInThreads(DoubleSolution solution, int nThreads) {
-        ExecutorService executor = Executors.newFixedThreadPool(nThreads);
+    private double[] executeInThreads(DoubleSolution solution) {
+        ExecutorService executor = Executors.newFixedThreadPool(concurrentSimulations);
 
-        var callables = IntStream.range(0, nThreads)
+        var callables = IntStream.range(0, concurrentSimulations)
                 .mapToObj(i -> (Callable<Double>) () -> doCalculation(solution, i))
                 .toList();
 
@@ -162,7 +164,7 @@ public class GeneratorProblem extends AbstractDoubleProblem {
         return routesCreator.createRoutesWithStartTimeInThreads(
                 city,
                 trajectories.singleTrajectories(),
-                3
+                concurrentRoutesGenerator
         );
     }
 
