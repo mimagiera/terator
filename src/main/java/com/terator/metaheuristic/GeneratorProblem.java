@@ -102,6 +102,7 @@ public class GeneratorProblem extends AbstractDoubleProblem {
 
     @Override
     public DoubleSolution evaluate(DoubleSolution solution) {
+        LOGGER.info("Starting evaluation");
         var results = executeInThreads(solution);
         var stats = Stats.of(results);
         var meanAccuracy = stats.mean();
