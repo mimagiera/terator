@@ -195,9 +195,9 @@ public class SimpleTrajectoryListCreator implements TrajectoryListCreator {
     }
 
     private int getNumberOfDraws(double expectedNumberOfDrawsForBuildingType, double metaSpecificValue) {
-        double areaConst = 1d / 1500;
+        double areaConst = 1d / 1200;
 
         var expectedNumberOfDrawsBasedOnArea = expectedNumberOfDrawsForBuildingType * metaSpecificValue * areaConst;
-        return (int) random.nextGaussian(expectedNumberOfDrawsBasedOnArea, 1.5);
+        return (int) random.nextGaussian(expectedNumberOfDrawsBasedOnArea, 1.2);
     }
 }

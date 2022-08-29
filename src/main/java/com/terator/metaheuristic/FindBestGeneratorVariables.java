@@ -88,7 +88,7 @@ public class FindBestGeneratorVariables {
                 .setSelection(selection)
                 .setSolutionListEvaluator(evaluator)
                 .setMaxEvaluations(300)
-                .setPopulationSize(4)
+                .setPopulationSize(8)
                 .build();
 
         AlgorithmRunner algorithmRunner = new AlgorithmRunner.Executor(algorithm).execute();
