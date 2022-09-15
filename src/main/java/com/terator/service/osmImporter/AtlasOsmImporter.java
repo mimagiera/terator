@@ -8,7 +8,7 @@ import org.springframework.stereotype.Service;
 
 import java.util.stream.StreamSupport;
 
-import static com.terator.service.TeratorExecutor.printElapsedTime;
+import static com.terator.service.TeratorExecutorJMetal.printElapsedTime;
 
 @Service
 @RequiredArgsConstructor

@@ -11,7 +11,7 @@ import java.util.Map;
 import java.util.Random;
 import java.util.stream.IntStream;
 
-import static com.terator.service.TeratorExecutor.MINUTES_INTERVAL_GENERATOR;
+import static com.terator.service.TeratorExecutorJMetal.MINUTES_INTERVAL_GENERATOR;
 
 public class FromHouseStrategy implements FromBuildingTypeStrategy {
     @Override

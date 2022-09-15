@@ -24,7 +24,7 @@ import java.util.concurrent.atomic.AtomicReference;
 
 import static com.terator.model.PointOnMapOnRoad.DEFAULT_LANES_NUMBER;
 import static com.terator.model.PointOnMapOnRoad.DEFAULT_MAX_SPEED;
-import static com.terator.service.TeratorExecutor.printElapsedTime;
+import static com.terator.service.TeratorExecutorJMetal.printElapsedTime;
 
 @Service
 @RequiredArgsConstructor

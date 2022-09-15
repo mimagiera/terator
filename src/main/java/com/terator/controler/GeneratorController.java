@@ -1,6 +1,6 @@
 package com.terator.controler;
 
-import com.terator.service.TeratorExecutor;
+import com.terator.service.TeratorExecutorJMetal;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestParam;
@@ -11,7 +11,7 @@ import org.uma.jmetal.solution.doublesolution.DoubleSolution;
 @RequiredArgsConstructor
 public class GeneratorController {
 
-    private final TeratorExecutor teratorExecutor;
+    private final TeratorExecutorJMetal teratorExecutor;
 
     @GetMapping("/")
     public DoubleSolution getTrajectories(@RequestParam String fileName) {

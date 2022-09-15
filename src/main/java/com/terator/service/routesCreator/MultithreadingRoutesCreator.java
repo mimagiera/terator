@@ -19,7 +19,7 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.stream.IntStream;
 
-import static com.terator.service.TeratorExecutor.printElapsedTime;
+import static com.terator.service.TeratorExecutorJMetal.printElapsedTime;
 
 @RequiredArgsConstructor
 @Service

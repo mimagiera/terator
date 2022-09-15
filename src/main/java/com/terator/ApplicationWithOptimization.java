@@ -1,6 +1,6 @@
 package com.terator;
 
-import com.terator.service.TeratorExecutor;
+import com.terator.service.TeratorExecutorJMetal;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.ApplicationContext;
@@ -11,7 +11,7 @@ public class ApplicationWithOptimization {
 
     public static void main(String[] args) {
         ApplicationContext context = new AnnotationConfigApplicationContext("com.terator");
-        var teratorExecutor = context.getBean(TeratorExecutor.class);
+        var teratorExecutor = context.getBean(TeratorExecutorJMetal.class);
         var osmFilePath = "krk_min.osm.pbf";
         int concurrentSimulations = 1;
         int concurrentRoutesGenerator = 1;
