@@ -28,7 +28,6 @@ import org.uma.jmetal.solution.doublesolution.DoubleSolution;
 import org.uma.jmetal.util.JMetalLogger;
 import org.uma.jmetal.util.evaluator.SolutionListEvaluator;
 import org.uma.jmetal.util.evaluator.impl.MultiThreadedSolutionListEvaluator;
-import org.uma.jmetal.util.evaluator.impl.SequentialSolutionListEvaluator;
 import org.uma.jmetal.util.fileoutput.SolutionListOutput;
 import org.uma.jmetal.util.fileoutput.impl.DefaultFileOutputContext;
 
@@ -67,15 +66,12 @@ public class FindBestGeneratorVariables {
             int concurrentRoutesGenerator
     ) {
         SolutionListEvaluator<DoubleSolution> evaluator;
-        if (concurrentSimulations == 1) {
-            evaluator = new SequentialSolutionListEvaluator<>();
-        } else {
-            evaluator = new MultiThreadedSolutionListEvaluator<>(concurrentSimulations);
-        }
+        evaluator = new MultiThreadedSolutionListEvaluator<>(24);
 
         DoubleProblem problem = new GeneratorProblem(trajectoryListCreator, fixturesLocationMatcher, accuracyChecker,
                 simulationExecutor, city,
-                allBuildingsByType, routesCreator, aggregatedTrafficBySegments, concurrentSimulations, concurrentRoutesGenerator);
+                allBuildingsByType, routesCreator, aggregatedTrafficBySegments, concurrentSimulations,
+                concurrentRoutesGenerator);
 
         DifferentialEvolutionCrossover crossover = new DifferentialEvolutionCrossover(
                 0.5, 0.5, DifferentialEvolutionCrossover.DE_VARIANT.RAND_1_BIN

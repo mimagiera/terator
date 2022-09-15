@@ -19,7 +19,7 @@ public class SurfaceAreaCalculator {
         if (atlasEntity instanceof Area area) {
             return area.asPolygon().surface().asMeterSquared();
         } else {
-            return 0;
+            return 400d;
         }
     }
 

@@ -13,8 +13,8 @@ public class ApplicationWithOptimization {
         ApplicationContext context = new AnnotationConfigApplicationContext("com.terator");
         var teratorExecutor = context.getBean(TeratorExecutor.class);
         var osmFilePath = "krk_min.osm.pbf";
-        int concurrentSimulations = 3;
-        int concurrentRoutesGenerator = 2;
+        int concurrentSimulations = 1;
+        int concurrentRoutesGenerator = 1;
         if (args.length == 1) {
             concurrentSimulations = Integer.parseInt(args[0]);
         } else if (args.length == 2) {
