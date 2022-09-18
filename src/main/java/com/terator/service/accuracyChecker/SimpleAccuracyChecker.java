@@ -15,11 +15,11 @@ import org.springframework.stereotype.Service;
 
 import java.util.Collection;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Random;
 import java.util.Set;
 import java.util.function.Function;
 import java.util.stream.Collectors;
-import java.util.stream.IntStream;
 
 import static com.terator.service.TeratorExecutorJMetal.printElapsedTime;
 
@@ -39,7 +39,7 @@ public class SimpleAccuracyChecker implements AccuracyChecker {
 
         var simulationState = simulationResult.simulationState().state();
 
-        var resultsFromSegments = detectorLocationToSimulationSegment.entrySet().stream()
+        Set<AccuracyInSegment> resultsFromSegments = detectorLocationToSimulationSegment.entrySet().stream()
                 .map(detectorsWithMappedSegments -> {
                     var detectorWithLocations = detectorsWithMappedSegments.getKey();
                     var matchedSegment = detectorsWithMappedSegments.getValue();
@@ -48,8 +48,14 @@ public class SimpleAccuracyChecker implements AccuracyChecker {
                     var dataFromInductionLoops =
                             aggregatedTrafficBySegments.get(detectorWithLocations.segmentId());
 
-                    return compareDataFromSimulationWithRealData(dataFromSimulation, dataFromInductionLoops);
+                    if (!dataFromInductionLoops.isEmpty()) {
+                        return Optional.of(compareDataFromSimulationWithRealData(dataFromSimulation,
+                                dataFromInductionLoops));
+                    } else {
+                        return Optional.<AccuracyInSegment>empty();
+                    }
                 })
+                .flatMap(Optional::stream)
                 .collect(Collectors.toSet());
 
         var meanSquaredError = resultsFromSegments.stream()
@@ -101,8 +107,8 @@ public class SimpleAccuracyChecker implements AccuracyChecker {
                         Long::sum
                 ));
 
-        var resultsInHours = IntStream.rangeClosed(0, 23)
-                .boxed()
+        var resultsInHours = dataFromInductionLoopsPerHour.keySet()
+                .stream()
                 .collect(Collectors.toMap(
                         Function.identity(),
                         hour -> new ResultToCompareInHour(
@@ -110,6 +116,7 @@ public class SimpleAccuracyChecker implements AccuracyChecker {
                                 dataFromInductionLoopsPerHour.getOrDefault(hour, 0d)
                         )
                 ));
+
 
         var accuracy = resultsInHours.values().stream()
                 .map(accuracyInHour -> {
