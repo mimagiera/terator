@@ -26,13 +26,17 @@ import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
 import java.time.LocalDate;
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
+import java.util.OptionalDouble;
 import java.util.Random;
 import java.util.Set;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
+import java.util.stream.Stream;
 
 @Service
 @RequiredArgsConstructor
@@ -67,6 +71,71 @@ public class TeratorExecutor {
                 .forEach(numberOfDay ->
                         executeForSingleDay(numberOfDay, city, aggregatedTrafficBySegments, distinctDays,
                                 allBuildingsByType, probabilities));
+    }
+
+    void calculateSingleRealDataVsMeanData(Map<Integer, Set<AggregatedTrafficBySegment>> aggregatedTrafficBySegments) {
+        var distinctDays = aggregatedTrafficBySegments.values().stream()
+                .flatMap(a -> a.stream().map(AggregatedTrafficBySegment::getDate))
+                .distinct()
+                .sorted()
+                .toList();
+
+        var res = new HashMap<LocalDate, List<Double>>();
+        var resCount = new HashMap<LocalDate, Double>();
+
+        aggregatedTrafficBySegments.forEach((segmentId, dataFromOneSegment) -> {
+            // srednia ze wszystkich dni dla tego segmentu w kazdej z godzin
+            var dataFromInductionLoopsPerHour = dataFromOneSegment.stream()
+                    .collect(Collectors.groupingBy(
+                            AggregatedTrafficBySegment::getHour,
+                            Collectors.mapping(AggregatedTrafficBySegment::getCount, Collectors.averagingInt(a -> a))
+                    ));
+
+
+            distinctDays.forEach(dateToCompareWith -> {
+                var dataFromThisDay =
+                        dataFromOneSegment.stream().filter(a -> a.getDate().equals(dateToCompareWith)).collect(
+                                Collectors.toSet());
+
+                final OptionalDouble average =
+                        dataFromThisDay.stream().map(AggregatedTrafficBySegment::getCount).mapToDouble(a -> a)
+                                .average();
+                if (average.isPresent()) {
+                    var counts =
+                            average.getAsDouble();
+                    resCount.put(dateToCompareWith, counts);
+                } else {
+                    var etf = 35;
+                }
+
+                var averageMeanSquaredErrorInSegmentInDay = dataFromThisDay.stream().map(aggregatedTrafficBySegment -> {
+                            var count = aggregatedTrafficBySegment.getCount();
+                            var averageInThisHour = dataFromInductionLoopsPerHour.get(aggregatedTrafficBySegment.getHour());
+                            if (averageInThisHour != null) {
+                                return Optional.of(Math.pow(count - averageInThisHour, 2));
+                            } else {
+                                return Optional.<Double>empty();
+                            }
+                        })
+                        .flatMap(Optional::stream)
+                        .collect(Collectors.toSet());
+
+                var inThisDay = res.get(dateToCompareWith);
+                if (inThisDay == null) {
+                    res.put(dateToCompareWith, averageMeanSquaredErrorInSegmentInDay.stream().toList());
+                } else {
+                    List<Double> combined = Stream.concat(
+                            inThisDay.stream(),
+                            averageMeanSquaredErrorInSegmentInDay.stream()).toList();
+                    res.put(dateToCompareWith, combined);
+                }
+
+            });
+
+        });
+
+        var a = 2356;
+
     }
 
     private void executeForSingleDay(int numberOfDay, City city,
