@@ -34,3 +34,6 @@ jar {
     }
 }
 ```
+
+If using different map then `krk_min.osm.pbf` you need to specify its corners coordinates (i was unable to extract 
+it from map file). It can be specified in: `com.terator.service.generatorCreator.DataExtractor.extractCityEdgePoints`

@@ -70,11 +70,6 @@ public final class DataExtractor {
     }
 
     public static List<PointOnMapOnRoad> extractCityEdgePoints(Atlas atlas) {
-        // map_kawalek
-//        var rectangle = Rectangle.forCorners(
-//                new Location(Latitude.degrees(50.0554800), Longitude.degrees(19.9029400)),
-//                new Location(Latitude.degrees(50.0567500), Longitude.degrees(19.9056300))
-//        );
 
         //krk_min.osm.pbf
         var rectangle = Rectangle.forCorners(
