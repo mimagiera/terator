@@ -21,9 +21,23 @@ export
 `.\osmosis-0.48.3\bin\osmosis --read-pbf .\malopolskie-latest.osm.pbf --bounding-box top=50.0768 left=19.8861 
 bottom=50.0522 right=19.9365 completeWays=yes --write-pbf krk_min.osm.pbf`
 
-To run whole generator with optimization: run class `ApplicationWithOptimization`. To run application with comparing 
+## How to develop
+### Prerequisites
+* Java 17
+* Gradle
+## Run from commandline
+
+To run whole generator with optimization: run class `ApplicationWithOptimization`. It may take two 
+positional 
+arguments: number of generations to execute with the same set of parameters (default 1) and number of concurrent 
+threads in which A* algorithm is executed for start and end point to find exact routes between them (default 1).
+
+To run 
+application with comparing 
 data to single days with parameters from [src/main/resources/var.tsv](src/main/resources/var.tsv) run class 
-`ApplicationWithCheckingDays`.
+`ApplicationWithCheckingDays`. It may take argument with number of starting day with which results are compared to.
+
+### Run from jar
 
 To build single jar file run gradle task `shadowJar`. Its main class (`ApplicationWithOptimization` or 
 `ApplicationWithCheckingDays`) can be specified in [build.gradle](build.gradle) file in:
@@ -34,6 +48,8 @@ jar {
     }
 }
 ```
+
+### Using different map
 
 If using different map then `krk_min.osm.pbf` you need to specify its corners coordinates (i was unable to extract 
 it from map file). It can be specified in: `com.terator.service.generatorCreator.DataExtractor.extractCityEdgePoints`
