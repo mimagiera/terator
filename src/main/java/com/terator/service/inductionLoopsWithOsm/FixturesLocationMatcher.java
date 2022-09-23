@@ -47,7 +47,9 @@ public class FixturesLocationMatcher {
         return detectorsWithLocations.stream()
                 .collect(Collectors.toMap(Function.identity(), detectorWithLocations -> {
                     var locationsToBeMatched = detectorWithLocations.locationOfFixtures();
-                    return findMostMatchingSegment(locationsToBeMatched, existingSegmentsFromSimulation);
+                    final Optional<SimulationSegment> mostMatchingSegment =
+                            findMostMatchingSegment(locationsToBeMatched, existingSegmentsFromSimulation);
+                    return mostMatchingSegment;
                 }))
                 .entrySet().stream()
                 .filter(detectorLocationOptionalEntry -> detectorLocationOptionalEntry.getValue().isPresent())
@@ -130,4 +132,20 @@ public class FixturesLocationMatcher {
                         location.getLatitude().asDegrees() + "," + location.getLongitude().asDegrees() +
                                 ",#75a481"));
     }
+
+    String locationsOfLamps(Set<Location> locationsToBeMatched, Optional<SimulationSegment> mostMatchingSegment) {
+        var all = locationsToBeMatched.stream()
+                .map(location -> location.getLatitude().toString() + "," + location.getLongitude().toString() +
+                        ",#00FF00")
+                .toList();
+
+        var locStart = mostMatchingSegment.get().edge().start().getLocation();
+        var sStart = locStart.getLatitude().toString() + "," + locStart.getLongitude().toString() + ",#ff0000";
+
+        var locEnd = mostMatchingSegment.get().edge().end().getLocation();
+        var sEnd = locEnd.getLatitude().toString() + "," + locEnd.getLongitude().toString() + ",#ff0000";
+
+        return String.join("\n", all) + "\n" + sStart + "\n" + sEnd;
+    }
+
 }

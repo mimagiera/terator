@@ -52,6 +52,9 @@ public class TeratorExecutor {
     private final AccuracyChecker accuracyChecker;
 
 
+    /**
+     * executes checking accuracy of generator complaining data to day specified by startingNumberOfDay and 39 more days
+     */
     public void execute(String osmFile, int startingNumberOfDay) {
         var city = osmImporter.importData(osmFile);
         var aggregatedTrafficBySegments = aggregatedTrafficBySegmentService.getAggregatedTrafficInWeekdaysBySegments();
@@ -148,8 +151,9 @@ public class TeratorExecutor {
         var routesWithStartTime = routesCreator.createRoutesWithStartTimeInThreads(
                 city,
                 trajectories.singleTrajectories(),
-                20
+                6
         );
+
         var onlyOneDay = getDataFromOneDay(numberOfDay, aggregatedTrafficBySegments, distinctDays);
 
         var simulationResult = simulationExecutor.executeSimulation(routesWithStartTime);

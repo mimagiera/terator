@@ -13,6 +13,10 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 
+import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
+import java.io.PrintWriter;
 import java.util.Collection;
 import java.util.Map;
 import java.util.Optional;
@@ -39,6 +43,8 @@ public class SimpleAccuracyChecker implements AccuracyChecker {
 
         var simulationState = simulationResult.simulationState().state();
 
+        var nanoTimeUsedInCsvFileName = System.nanoTime();
+
         Set<AccuracyInSegment> resultsFromSegments = detectorLocationToSimulationSegment.entrySet().stream()
                 .map(detectorsWithMappedSegments -> {
                     var detectorWithLocations = detectorsWithMappedSegments.getKey();
@@ -49,8 +55,23 @@ public class SimpleAccuracyChecker implements AccuracyChecker {
                             aggregatedTrafficBySegments.get(detectorWithLocations.segmentId());
 
                     if (!dataFromInductionLoops.isEmpty()) {
-                        return Optional.of(compareDataFromSimulationWithRealData(dataFromSimulation,
-                                dataFromInductionLoops));
+                        var accuracyInSegment =
+                                compareDataFromSimulationWithRealData(dataFromSimulation, dataFromInductionLoops);
+
+                        var inHours = accuracyInSegment.accuracyInHours();
+                        if (!inHours.isEmpty()) {
+                            var averageMseInDetector = inHours.values().stream()
+                                    .map(a -> Math.pow(a.countFromSimulation() - a.averageCountFromInductionLoops(),
+                                            2))
+                                    .mapToDouble(a -> a)
+                                    .average()
+                                    .getAsDouble();
+
+                            saveResultsToCsvFiles(nanoTimeUsedInCsvFileName, detectorWithLocations, inHours,
+                                    averageMseInDetector);
+                        }
+
+                        return Optional.of(accuracyInSegment);
                     } else {
                         return Optional.<AccuracyInSegment>empty();
                     }
@@ -87,6 +108,30 @@ public class SimpleAccuracyChecker implements AccuracyChecker {
         long end = System.currentTimeMillis();
         printElapsedTime(start, end, "checking accuracy", LOGGER);
         return new GeneratedTrajectoriesAccuracy(resultsFromSegments, meanSquaredError);
+    }
+
+    private void saveResultsToCsvFiles(long time, DetectorLocation detectorWithLocations,
+                                       Map<Integer, ResultToCompareInHour> inHours, double averageMseInDetector
+    ) {
+        File csvOutputFile = new File("results_in_seg" + time + ".csv");
+        try (PrintWriter pw = new PrintWriter(new FileOutputStream(csvOutputFile, true))) {
+            inHours.forEach((hour, resultToCompareInHour) -> {
+                pw.println(
+                        detectorWithLocations.segmentId() + "," +
+                                hour + "," +
+                                resultToCompareInHour.countFromSimulation() + "," +
+                                resultToCompareInHour.averageCountFromInductionLoops());
+            });
+        } catch (FileNotFoundException e) {
+            e.printStackTrace();
+        }
+
+        File csvOutputFileMse = new File("results_in_seg_mse" + time + ".csv");
+        try (PrintWriter pw = new PrintWriter(new FileOutputStream(csvOutputFileMse, true))) {
+            pw.println(detectorWithLocations.segmentId() + "," + averageMseInDetector);
+        } catch (FileNotFoundException e) {
+            e.printStackTrace();
+        }
     }
 
     private AccuracyInSegment compareDataFromSimulationWithRealData(

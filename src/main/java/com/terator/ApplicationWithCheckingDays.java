@@ -11,7 +11,9 @@ public class ApplicationWithCheckingDays {
         var teratorExecutor = context.getBean(TeratorExecutor.class);
         var osmFilePath = "krk_min.osm.pbf";
 
-//        args = new String[] {"0"};
+        if (args.length == 0) {
+            args = new String[]{"0"};
+        }
 
         teratorExecutor.execute(osmFilePath, Integer.parseInt(args[0]));
 
